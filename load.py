@@ -10,7 +10,7 @@ class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
 
     loaded=pyqtSignal(np.ndarray, int, int, str, int)
 
-    def __init__(self, dataset, parent=None):
+    def __init__(self, parent=None):
         super(loadDialog, self).__init__(parent)
         self.setupUi(self)
         self.posButton.setDefault(True)
@@ -23,6 +23,7 @@ class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
     def on_posButton_clicked(self):
         self._posFilename=QFileDialog.getOpenFileName(self,"Open .pos",'', 'POS (*.pos)')
         self.posLabel.setText(self._posFilename) #TODO Set maximum length
+        print(self._posFilename)
 
     @pyqtSignature("int")
     def on_rangemethodComboBox_activated(self, cb_idx):

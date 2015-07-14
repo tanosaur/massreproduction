@@ -1,33 +1,30 @@
 import unittest
 import numpy as np
-
 from PyQt4.QtCore import QObject, pyqtSignal
 
 class DataSet(QObject):
     m2c_updated = pyqtSignal(np.ndarray)
+    suggest=pyqtSignal(list,int)
+    suggestUndo=pyqtSignal()
 
     def __init__(self, parent=None):
         super(DataSet, self).__init__(parent)
-
         self.m2c=np.array([])
-        self.history=[]
         self.method=-1
         self.maxchargestate=0
         self.knownelems=np.array([])
-        self.suggestelems=np.array([])
-        self.suggestmcs=np.array([])
+        self.suggestelems=[]
+        self.suggestmcs=-1
 
         #Thinking that charge states will be implemented as next row (isotopes with same charge state on same row)
         #TODO investigate charge states vs. Peter's code
 
-    def load(self, data, length, method, knownelemstring, maxchargestate):
-        self.history.append(self.m2c)
+    def load(self, data, method, knownelemstring, maxchargestate):
         self.m2c=np.append(self.m2c,data)
         self.method=method
         self.maxchargestate=abs(maxchargestate)
         knownelemstring=str(knownelemstring) #TODO WHY WAS THIS NECESSARY
         self.knownelems=knownelemstring.split(',')
-        # print('hihi')
         # print(knownelemstring)
         # print(type(knownelemstring))
         # print(self.knownelems)
@@ -37,33 +34,9 @@ class DataSet(QObject):
     def load_suggest(self,suggestelemstring,maxstatesstring):
         self.suggestelems=suggestelemstring.split(',')
         self.suggestmcs=abs(maxstatesstring) #change to abs and int
-        print(suggestelemstring)
-        print(type(suggestelemstring))
-        print(self.suggestelems)
-
-    def undo(self):
-        if self.history!=[]:
-            self.m2c=self.history.pop()
-            self.m2c_updated.emit(self.m2c)
-        # else make the bell sound
-
-    def redo(self):
-        # if next history exists
-        pass
-
-class CommandAdd(QUndoCommand):
-    """docstring for """
-    def __init__(self, arg):
-        super(, self).__init__()
-        self.arg = arg
-
-    def redo(self):
-        self.listWidget.insertItem(self.row, self.string)
-        self.listWidget.setCurrentRow(self.row)
-
-    def undo(self):
-        item = self.listWidget.takeItem(self.row)
-        del item
+        # print(suggestelemstring)
+        # print(type(suggestelemstring))
+        # print(self.suggestelems)
 
 class TestDataSet(unittest.TestCase):
 
