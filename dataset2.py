@@ -4,8 +4,7 @@ from PyQt4.QtCore import QObject, pyqtSignal
 
 class DataSet(QObject):
     m2c_updated = pyqtSignal(np.ndarray)
-    suggest=pyqtSignal(list,int)
-    suggestUndo=pyqtSignal()
+    suggest=pyqtSignal(list)
 
     def __init__(self, parent=None):
         super(DataSet, self).__init__(parent)
@@ -13,8 +12,7 @@ class DataSet(QObject):
         self.method=-1
         self.maxchargestate=0
         self.knownelems=np.array([])
-        self.suggestelems=[]
-        self.suggestmcs=-1
+        self.suggestions=[]
 
         #Thinking that charge states will be implemented as next row (isotopes with same charge state on same row)
         #TODO investigate charge states vs. Peter's code
@@ -31,12 +29,10 @@ class DataSet(QObject):
         # Convert string to individual element in array
         # print(self.knownelems[0]) #To access each element of string
 
-    def load_suggest(self,suggestelemstring,maxstatesstring):
-        self.suggestelems=suggestelemstring.split(',')
-        self.suggestmcs=abs(maxstatesstring) #change to abs and int
-        # print(suggestelemstring)
-        # print(type(suggestelemstring))
-        # print(self.suggestelems)
+    def load_suggest(self,suggestelemstring,maxchargestate):
+        suggestedelements=suggestelemstring.split(',')
+        for element in suggestedelements:
+            self.suggestions.append((element, maxchargestate))
 
 class TestDataSet(unittest.TestCase):
 

@@ -24,16 +24,6 @@ import matplotlib #TODO take this out if possible
 import aptread.aptload
 # matplotlib.rcParams['keymap.pan'] = u'super+p'
 
-# class histWidget(QWidget, ui_historywidget.Ui_historyWidget):
-#     def __init__(self, undostack, parent=None):
-#         super(histWidget, self).__init__(parent)
-#
-#         self.view=QUndoView(self, undoStack, parent=histWidget)
-
-# class stackView(QWidget):
-#     def __init__(self, stack, parent=None):
-#         super(stackView, self).__init__(parent)
-#         self.viewHist=QUndoView(stack)
 
 class MainWindow(QMainWindow, ui_mainwindow2.Ui_MainWindow):
 
@@ -41,7 +31,7 @@ class MainWindow(QMainWindow, ui_mainwindow2.Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
         self.dataset = DataSet(self)
-        filenames='/Users/claratan/OneDrive/GUI/data/R04.pos' #TODO change so that
+        filenames='/Users/sojung/OneDrive/GUI/data/R04.pos' #TODO change so that
             #multiple files added append to array
             #combine the data, then set as m2c and configure length!
         m2c=aptread.aptload.APData(filenames).pos.mc
@@ -86,8 +76,11 @@ class MainWindow(QMainWindow, ui_mainwindow2.Ui_MainWindow):
 
     @pyqtSignature("") # Must be included even if ""
     def on_suggestButton_clicked(self):
-        self.dataset.load_suggest(str(self.knownelementsLineEdit.text()), int(str(self.maxchargestateLineEdit.text())))
-        commandSuggest=CommandSuggest('Suggest ions', self.dataset)
+        commandSuggest=CommandSuggest(
+            str(self.knownelementsLineEdit.text()),
+            abs(int(str(self.maxchargestateLineEdit.text()))),
+            self.dataset
+        )
         self.undoStack.push(commandSuggest)
 
     def updateUi(self):
@@ -129,8 +122,6 @@ class workingFrame(QMainWindow):
 
         data.m2c_updated.connect(self.on_dataset_m2c_updated)
         data.suggest.connect(self.on_suggest)
-        data.suggestUndo.connect(self.on_suggestUndo)
-            #TODO think: data will not need to be passed in if signals aren't there...
 
         self.ss=SpanSelector(self.ax,self.onselect,'horizontal')
         # self.canvas.draw()
@@ -158,37 +149,34 @@ class workingFrame(QMainWindow):
         # http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
         key_press_handler(event, self.canvas, self.mpl_toolbar)
 
-    @pyqtSlot(list,int)
-    def on_suggest(self,elements,mcs):
-        self.ax.hold(False)
-        self.lines=0
+    @pyqtSlot(list)
+    def on_suggest(self,suggestions):
+        self.ax.lines = []
+        self.ax.texts = []
 
-        _lookup=dict(Al=[(27,26.98,100)],Cr=[(50,49.95,4.3),(52,51.94,83.8),(53,52.94,9.5),(54,53.94,2.4)],H=[(1,1.008,99.985),(2,2.014,0.015)])
-        for i in np.arange(len(elements)):
+        _lookup={
+            "Al": [(27,26.98,100)],
+            "Cr": [(50,49.95,4.3),(52,51.94,83.8),(53,52.94,9.5),(54,53.94,2.4)],
+            "H":  [(1,1.008,99.985),(2,2.014,0.015)]
+        }
+
+        for element, mcs in suggestions:
             linecolor=next(self.colors)
-            records=_lookup[elements[i]]
+            records=_lookup[element]
             name=np.empty(len(records)*mcs,dtype=object)
             m2c=np.empty(len(records)*mcs)
 
             for k in np.arange(mcs)+1:
                 for j in np.arange(len(records)):
-                    name[j+((k-1)*len(records))]=str(records[j][0])+elements[i]+'+'+str(k) #concat with element name and charge state
+                    name[j+((k-1)*len(records))]=str(records[j][0])+element+'+'+str(k) #concat with element name and charge state
                     m2c[j+((k-1)*len(records))]=records[j][1]/k
 
             for l in np.arange(len(records*mcs)):
                 self.ax.axvline(m2c[l], color=linecolor)
                 self.ax.text(m2c[l],100,name[l],fontsize=10) #TODO TREAT OVERLAPPING SOMEHOW
                 # #TODO keep labels centered on line (x position), and at top relative to window size! (y position)
-                self.fig.canvas.draw_idle()
-                # # print(self.ax.get_ylim())
-                self.lines=self.lines+1
 
-    @pyqtSlot()
-    def on_suggestUndo(self):
-        for m in np.arange(self.lines):
-            self.ax.lines.pop(0)
-        self.canvas.draw()
-
+        self.fig.canvas.draw()
 
 class rangedFrame(QMainWindow):
 

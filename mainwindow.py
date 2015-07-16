@@ -30,32 +30,30 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.setupUi(self)
         self.dataset = DataSet(self)
 
-    @pyqtSlot(np.ndarray, int, int, str, int)
-    def on_loaded(self, m2c,length,rangemethod,knownelemstr, maxchargestate):
-        self.dataset.load(m2c, length,rangemethod, knownelemstr, maxchargestate)
+        # TODO configure filename separation for print (e.g. each element of array separated by comma, convert to string)
+        self.undoStack=QUndoStack(self)
+        commandLoad=CommandLoad(m2c, rangemethod, knownelemstr, maxchargestate, 'Load: (%s)' %filenames, self.dataset)
+        self.undoStack.push(commandLoad) #Calls the 'redo' method
+            #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
+
+        self.stackView=QUndoView(self.undoStack, parent=self.stackView)
+        # stackView(self.undoStack)
+
+    @pyqtSlot(str,str,int,int)
+    def on_load(self,filename,knownelemstr,maxcsint,rangemethodint):
+        self.dataset.load(filename,knownelemstr,maxcsint,rangemethodint)
         self.plotWidget=workingFrame(self.dataset,3000,parent=self.workingFrame)
         self.foo=rangedFrame(self.dataset,3000,parent=self.rangedFrame)
-        self.suggest.connect(self.plotWidget.on_suggest) #NOTE this will only work if something has been loaded into plotwidget...
-                #consider this for future implementation
+        self.suggest.connect(self.plotWidget.on_suggest)
 
-        if self.dataset.method==1:
-            pass
-            #place auto ranges over plot
-            #place known elements and their range into table
+    # @pyqtSlot(np.ndarray, int, int, str, int)
+    # def on_loaded(self, m2c,length,rangemethod,knownelemstr, maxchargestate):
+    #     self.dataset.load(m2c, length,rangemethod, knownelemstr, maxchargestate)
+    #     self.plotWidget=workingFrame(self.dataset,3000,parent=self.workingFrame)
+    #     self.foo=rangedFrame(self.dataset,3000,parent=self.rangedFrame)
+    #     self.suggest.connect(self.plotWidget.on_suggest) #NOTE this will only work if something has been loaded into plotwidget...
+    #             #consider this for future implementation
 
-        elif self.dataset.method==2:
-            pass
-            #perform an auto range method
-            #place auto ranges over plot
-            #place known elements and their range into table
-
-        elif self.dataset.method==3:
-            print(type(self.dataset.knownelems))
-            print(self.dataset.knownelems[0])
-            self.suggest.emit(self.dataset.knownelems, self.dataset.maxchargestate)
-            #place known elements as suggest over plot
-
-            #TODO why is this a QStringList object when in DataSet it is a list?
 
     @pyqtSignature("") # Must be included even if ""
     def on_actionLoad_triggered(self):
@@ -106,8 +104,6 @@ class workingFrame(QMainWindow):
 
         self.ax=self.fig.add_subplot(111)
         self.ax.hold(False)
-        self.ax.hist(data.m2c,bins,histtype='step')
-        self.ax.set_yscale('log')
         self.bins = bins
         data.m2c_updated.connect(self.on_dataset_m2c_updated)
 
@@ -119,6 +115,7 @@ class workingFrame(QMainWindow):
     def on_dataset_m2c_updated(self, m2c):
         print("model update loopback")
         self.ax.hist(m2c, self.bins, histtype='step')
+        self.ax.set_yscale('log')
 
     def onselect(self,x0,x1):
         self.ax.axvspan(x0,x1, facecolor=next(self.colors), alpha=0.5)

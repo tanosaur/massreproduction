@@ -9,37 +9,23 @@ from PyQt4.QtGui import QUndoCommand, QUndoView
 #         super(StackView, self).__init__(parent)
 
 class CommandSuggest(QUndoCommand):
+    def __init__(self, knownelements, maxchargestate, dataset):
+        super(CommandSuggest, self).__init__('Suggest ions')
 
-    def __init__(self, description, dataset):
-        super(CommandSuggest, self).__init__(description)
-
-        self.dataset=dataset
-        self.elemhistory=[]
-        self.maxcshistory=[]
-        self.elemfuture=[]
-        self.maxcsfuture=[]
+        self.knownelements = knownelements
+        self.maxchargestate = maxchargestate
+        self.dataset = dataset
 
     def redo(self):
-        self.dataset.suggest.emit(self.dataset.suggestelems,self.dataset.suggestmcs)
-        self.elemhistory.append(self.dataset.suggestelems)
-        self.maxcshistory.append(self.dataset.suggestmcs)
+        self._original_suggestions = list(self.dataset.suggestions)
+        self.dataset.load_suggest(self.knownelements, self.maxchargestate)
+        self.dataset.suggest.emit(self.dataset.suggestions)
 
     def undo(self):
-        self.elemfuture.append(self.elemhistory.pop()) #TODO check with Scott
-        self.maxcsfuture.append(self.maxcshistory.pop())
-        #
-        # if self.elemhistory!=[]: #TODO make sure both fields are entered compulsory in view
-        #     self.dataset.suggestelems=self.elemhistory.pop()
-        #     self.dataset.suggestmcs=self.maxcshistory.pop()
-        # else:
-        #     self.dataset.suggestelems=[]
-        #     self.dataset.suggestmcs=0
-        #
-        # self.dataset.suggest.emit(self.dataset.suggestelems,self.dataset.suggestmcs)
-        self.dataset.suggestUndo.emit()
+        self.dataset.suggestions = self._original_suggestions
+        self.dataset.suggest.emit(self.dataset.suggestions)
 
 class CommandLoad(QUndoCommand):
-    #TODO where to put all this and pyqtSignal
 
     def __init__(self, data, method, knownelemstring, maxchargestate, description, dataset):
         super(CommandLoad, self).__init__(description)
@@ -51,12 +37,12 @@ class CommandLoad(QUndoCommand):
         self.dataset=dataset #TODO Ask Scott
 
         # Had to do this because redo and undo could only take in 1 argument, self.
-        self.history=[]
+        self._original_m2c = None
 
     def redo(self):
+        self._original_m2c = list(self.dataset.m2c) # BEFORE LOAD
         self.dataset.load(self.data,self.meth,self.knownelemstring,self.maxcs)
-        self.history.append(self.dataset.m2c)
-        self.dataset.m2c_updated.emit(self.dataset.m2c)
+        self.dataset.m2c_updated.emit(self.dataset.m2c) # AFTER LOAD
 
         if self.dataset.method==1:
             pass
@@ -79,9 +65,5 @@ class CommandLoad(QUndoCommand):
 
 
     def undo(self):
-        self.history.pop() #TODO check with Scott
-        if self.history!=[]:
-            self.dataset.m2c=self.history.pop()
-        else:
-            self.dataset.m2c=np.array([])
+        self.dataset.m2c = self._original_m2c
         self.dataset.m2c_updated.emit(self.dataset.m2c)

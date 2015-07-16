@@ -8,7 +8,9 @@ import numpy as np
 class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
     # Rarely need in Python, but useful in this case
 
-    loaded=pyqtSignal(np.ndarray, int, int, str, int)
+    load=pyqtSignal(str,str,int,int)
+
+    # loaded=pyqtSignal(np.ndarray, int, int, str, int)
 
     def __init__(self, parent=None):
         super(loadDialog, self).__init__(parent)
@@ -16,14 +18,12 @@ class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
         self.posButton.setDefault(True)
         self._posFilename=''
         self._rangemethod=-1
-        self.undoStack = QUndoStack(self)
 
     @pyqtSignature("") # Must be included even if ""
     # as the textEdited() signal's argument is not optional
     def on_posButton_clicked(self):
         self._posFilename=QFileDialog.getOpenFileName(self,"Open .pos",'', 'POS (*.pos)')
         self.posLabel.setText(self._posFilename) #TODO Set maximum length
-        print(self._posFilename)
 
     @pyqtSignature("int")
     def on_rangemethodComboBox_activated(self, cb_idx):
@@ -39,21 +39,25 @@ class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
     def on_loadButton_clicked(self):
         if self._posFilename is not None and self._rangemethod is not None and self._rangemethod is not 0:
             try:
-                WM=NPM(aptread.aptload.APData(self._posFilename))
-                knownelements=str(self.knownelementsLineEdit.text())
-                # print(type(knownelements))
-                maxchargestate=int(str(self.maxchargestateLineEdit.text()))
-                self.loaded.emit(WM.MC, WM.LEN, self._rangemethod, knownelements, maxchargestate)
+                # WM=NPM(aptread.aptload.APData(self._posFilename))
+                _knownelements=str(self.knownelementsLineEdit.text())
+                _maxchargestate=abs(int(str(self.maxchargestateLineEdit.text())))
+
+                posFilename=list(self._posFilename)
+                knownelements=list(_knownelements)
+                maxchargestate=list(_maxchargestate)
+                rangemethod=list(self._rangemethod)
+                self.load.emit(posFilename, knownelements, maxchargestate, rangemethod)
+                # self.loaded.emit(WM.MC, WM.LEN, self._rangemethod, knownelements, maxchargestate)
                 loadDialog.reject(self) #USE done() and implement flag
             except aptread.aptload.APReadError:
                 self.QErrorMessage.showMessage('Error reading pos file(s). Check files and file path.')
 
-
-class NPM():
-
-    def __init__(self, data, parent=None):
-        self.MC=data.pos.mc
-        self.LEN=len(data.pos)
+# class NPM():
+#
+#     def __init__(self, data, parent=None):
+#         self.MC=data.pos.mc
+#         self.LEN=len(data.pos)
 
 if __name__=="__main__":
     import sys
