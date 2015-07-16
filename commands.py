@@ -3,10 +3,10 @@ import numpy as np
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
 
-class StackView(QUndoView):
-
-    def __init__(self, undostack, parent):
-        super(StackView, self).__init__(parent)
+# class StackView(QUndoView):
+#
+#     def __init__(self, undostack, parent):
+#         super(StackView, self).__init__(parent)
 
 class CommandSuggest(QUndoCommand):
 
