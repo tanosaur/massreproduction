@@ -148,7 +148,7 @@ class SceneGraphModel(QtCore.QAbstractItemModel):
                 return node.name()
 
         if role == QtCore.Qt.DecorationRole:
-            PASS
+            pass
 
 
 

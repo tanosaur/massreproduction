@@ -1,9 +1,12 @@
 import sys
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+from matplotlib.figure import Figure
+from matplotlib.widgets import SpanSelector
 from matplotlib.backends.backend_qt4agg import FigureCanvasQTAgg as FigureCanvas
 from matplotlib.backends.backend_qt4agg import NavigationToolbar2QT as NavigationToolbar
 import aptread.aptload
+from itertools import cycle
 
 class workingWidget(QWidget):
     def __init__(self, data, bins, parent=None):
@@ -28,23 +31,32 @@ class workingWidget(QWidget):
         layout.addWidget(self.canvas)
         self.setLayout(layout)
 
+        self.colors=cycle(list('rybmc'))
         # create an axis
-        ax = self.figure.add_subplot(111)
+        self.ax = self.figure.add_subplot(111)
 
         # discards the old graph
-        ax.hold(False)
+        self.ax.hold(False)
 
         # plot data
-        ax.hist(data, bins, histtype='step')
+        self.ax.hist(data, bins, histtype='step')
 
+        self.ss=SpanSelector(self.ax,self.onselect, 'horizontal')
         # refresh canvas
         self.canvas.draw()
+
+
+    def onselect(self,x0,x1):
+        self.ax.axvspan(x0,x1, facecolor=next(self.colors), alpha=0.5)
+        print(x0,x1)
+        self.figure.canvas.draw_idle() #keeps the selection drawn on
+
 
 
 if __name__ == '__main__':
 
 
-    posFilename='/Users/claratan/OneDrive/Thesis/GUI/Step 3 Loadsave data/data/R04.pos'
+    posFilename='/Users/claratan/OneDrive/GUI/data/R04.pos'
 
     class NPM():
 

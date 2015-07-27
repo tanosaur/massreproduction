@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>651</width>
-    <height>741</height>
+    <width>1089</width>
+    <height>747</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -16,7 +16,34 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QGridLayout" name="gridLayout">
     <item row="0" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_2">
+     <layout class="QVBoxLayout" name="leftpanelLayout">
+      <item>
+       <spacer name="verticalSpacer">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>20</width>
+          <height>70</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item>
+       <widget class="QWidget" name="stackView" native="true">
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>200</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item row="0" column="1">
+     <layout class="QVBoxLayout" name="rangedLayout">
       <item>
        <widget class="QLabel" name="ranged_Label">
         <property name="text">
@@ -29,8 +56,8 @@
       </item>
      </layout>
     </item>
-    <item row="0" column="1" rowspan="2">
-     <layout class="QVBoxLayout" name="verticalLayout_4">
+    <item row="0" column="2" rowspan="2">
+     <layout class="QVBoxLayout" name="rightpanelLayout">
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
@@ -76,43 +103,7 @@
          </layout>
         </item>
         <item>
-         <widget class="QTableWidget" name="tableWidget">
-          <property name="rowCount">
-           <number>10</number>
-          </property>
-          <property name="columnCount">
-           <number>5</number>
-          </property>
-          <attribute name="horizontalHeaderVisible">
-           <bool>false</bool>
-          </attribute>
-          <attribute name="horizontalHeaderCascadingSectionResizes">
-           <bool>true</bool>
-          </attribute>
-          <attribute name="horizontalHeaderMinimumSectionSize">
-           <number>4</number>
-          </attribute>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <row/>
-          <column/>
-          <column/>
-          <column/>
-          <column/>
-          <column/>
-          <item row="0" column="0">
-           <property name="text">
-            <string/>
-           </property>
-          </item>
-         </widget>
+         <widget class="QTableView" name="rangedTable"/>
         </item>
        </layout>
       </item>
@@ -125,99 +116,164 @@
          <attribute name="title">
           <string>Peak ID</string>
          </attribute>
-         <widget class="QPushButton" name="runpeakdetectButton">
-          <property name="geometry">
-           <rect>
-            <x>400</x>
-            <y>30</y>
-            <width>151</width>
-            <height>61</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Run Peak Detect</string>
-          </property>
-         </widget>
          <widget class="QWidget" name="layoutWidget">
           <property name="geometry">
            <rect>
-            <x>10</x>
-            <y>10</y>
-            <width>259</width>
-            <height>115</height>
+            <x>11</x>
+            <y>11</y>
+            <width>722</width>
+            <height>251</height>
            </rect>
           </property>
-          <layout class="QVBoxLayout" name="verticalLayout_5">
+          <layout class="QHBoxLayout" name="horizontalLayout_3">
            <item>
-            <widget class="QLabel" name="label_3">
-             <property name="text">
-              <string>Suggest Ions</string>
-             </property>
-            </widget>
+            <layout class="QVBoxLayout" name="verticalLayout_6">
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_5">
+               <item>
+                <widget class="QLabel" name="suggestionsLabel">
+                 <property name="text">
+                  <string>Suggest Ions</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QGridLayout" name="gridLayout_2">
+                 <item row="0" column="0">
+                  <widget class="QLabel" name="knownelementsLabel">
+                   <property name="text">
+                    <string>Known Elements</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="0" column="1">
+                  <widget class="QLineEdit" name="knownelementsLineEdit">
+                   <property name="text">
+                    <string/>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="0">
+                  <widget class="QLabel" name="maxchargestateLabel">
+                   <property name="text">
+                    <string>Max Charge State</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item row="1" column="1">
+                  <widget class="QLineEdit" name="maxchargestateLineEdit"/>
+                 </item>
+                 <item row="2" column="1">
+                  <widget class="QPushButton" name="suggestButton">
+                   <property name="text">
+                    <string>Suggest</string>
+                   </property>
+                  </widget>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+             <item>
+              <layout class="QVBoxLayout" name="verticalLayout_4">
+               <item>
+                <widget class="QLabel" name="spectrumviewLabel">
+                 <property name="text">
+                  <string>Spectrum View</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <layout class="QVBoxLayout" name="verticalLayout_3">
+                 <item>
+                  <widget class="QRadioButton" name="allhitsRadioButton">
+                   <property name="text">
+                    <string>All hits</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <widget class="QRadioButton" name="singlehitsRadioButton">
+                   <property name="text">
+                    <string>Single hits</string>
+                   </property>
+                  </widget>
+                 </item>
+                 <item>
+                  <layout class="QVBoxLayout" name="verticalLayout_2">
+                   <item>
+                    <widget class="QRadioButton" name="multiplehitsRadioButton">
+                     <property name="text">
+                      <string>Multiple hits</string>
+                     </property>
+                    </widget>
+                   </item>
+                   <item>
+                    <layout class="QHBoxLayout" name="horizontalLayout_2">
+                     <item>
+                      <spacer name="horizontalSpacer">
+                       <property name="orientation">
+                        <enum>Qt::Horizontal</enum>
+                       </property>
+                       <property name="sizeHint" stdset="0">
+                        <size>
+                         <width>40</width>
+                         <height>20</height>
+                        </size>
+                       </property>
+                      </spacer>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="minhitsLineEdit">
+                       <property name="text">
+                        <string>Min</string>
+                       </property>
+                      </widget>
+                     </item>
+                     <item>
+                      <widget class="QLineEdit" name="maxhitsLineEdit">
+                       <property name="text">
+                        <string>Max</string>
+                       </property>
+                      </widget>
+                     </item>
+                    </layout>
+                   </item>
+                  </layout>
+                 </item>
+                </layout>
+               </item>
+              </layout>
+             </item>
+            </layout>
            </item>
            <item>
-            <layout class="QGridLayout" name="gridLayout_2">
+            <layout class="QGridLayout" name="gridLayout_3">
              <item row="0" column="0">
-              <widget class="QLabel" name="knownelementsLabel">
+              <widget class="QLabel" name="ionlistLabel">
                <property name="text">
-                <string>Known Elements</string>
-               </property>
-              </widget>
-             </item>
-             <item row="0" column="1">
-              <widget class="QLineEdit" name="knownelementsLineEdit">
-               <property name="text">
-                <string/>
-               </property>
-              </widget>
-             </item>
-             <item row="1" column="0">
-              <widget class="QLabel" name="maxchargestateLabel">
-               <property name="text">
-                <string>Max Charge State</string>
+                <string>Ion List</string>
                </property>
               </widget>
              </item>
              <item row="1" column="1">
-              <widget class="QLineEdit" name="maxchargestateLineEdit"/>
-             </item>
-             <item row="2" column="1">
-              <widget class="QPushButton" name="suggestButton">
+              <widget class="QPushButton" name="addionsButton">
                <property name="text">
-                <string>Suggest</string>
+                <string>Add Ions</string>
                </property>
               </widget>
              </item>
+             <item row="2" column="1">
+              <widget class="QPushButton" name="removeionsButton">
+               <property name="text">
+                <string>Remove Ions</string>
+               </property>
+              </widget>
+             </item>
+             <item row="1" column="0" rowspan="2">
+              <widget class="QTreeView" name="ionlistTree"/>
+             </item>
             </layout>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="layoutWidget">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>170</y>
-            <width>388</width>
-            <height>91</height>
-           </rect>
-          </property>
-          <layout class="QGridLayout" name="gridLayout_3">
-           <item row="0" column="0" rowspan="2">
-            <widget class="QListView" name="listView"/>
-           </item>
-           <item row="0" column="1">
-            <widget class="QPushButton" name="addionsButton">
-             <property name="text">
-              <string>Add Ions</string>
-             </property>
-            </widget>
-           </item>
-           <item row="1" column="1">
-            <widget class="QPushButton" name="removeionsButton">
-             <property name="text">
-              <string>Remove Ions</string>
-             </property>
-            </widget>
            </item>
           </layout>
          </widget>
@@ -231,26 +287,13 @@
          <attribute name="title">
           <string>Advanced</string>
          </attribute>
-         <widget class="QCheckBox" name="manualBox">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>30</y>
-            <width>131</width>
-            <height>18</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Manual Override</string>
-          </property>
-         </widget>
         </widget>
        </widget>
       </item>
      </layout>
     </item>
-    <item row="1" column="0">
-     <layout class="QVBoxLayout" name="verticalLayout_3">
+    <item row="1" column="1">
+     <layout class="QVBoxLayout" name="workingLayout">
       <item>
        <widget class="QLabel" name="working_Label">
         <property name="text">
@@ -270,7 +313,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>651</width>
+     <width>1089</width>
      <height>22</height>
     </rect>
    </property>
@@ -298,10 +341,17 @@
      <string>Edit</string>
     </property>
     <addaction name="actionUndo"/>
-    <addaction name="actionREdo"/>
+    <addaction name="actionRedo"/>
+   </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionHistory"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -349,6 +399,9 @@
    <property name="text">
     <string>Load...</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+L</string>
+   </property>
   </action>
   <action name="actionAbout">
    <property name="text">
@@ -369,10 +422,21 @@
    <property name="text">
     <string>Undo</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Z</string>
+   </property>
   </action>
-  <action name="actionREdo">
+  <action name="actionRedo">
    <property name="text">
     <string>Redo</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+Z</string>
+   </property>
+  </action>
+  <action name="actionHistory">
+   <property name="text">
+    <string>History</string>
    </property>
   </action>
  </widget>

@@ -4,6 +4,8 @@ import sys
 
 import ui_mainwindow
 import load
+import commands
+from dataset import DataSet
 
 import numpy as np
 from itertools import cycle
@@ -21,36 +23,54 @@ import matplotlib
 # matplotlib.rcParams['keymap.pan'] = u'super+p'
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
-    suggest=pyqtSignal(np.ndarray, np.ndarray) #passing array
+    suggest=pyqtSignal(list,int)
 
     def __init__(self, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
-        self.MC=''
-        self.LEN=''
+        self.dataset = DataSet(self)
 
-    @pyqtSlot(np.ndarray,int)
-    def on_loaded(self,m2c,length):
-        self.MC=m2c #use set functions and also learn how to initialise
-        self.LEN=length
-        self.plotWidget=workingFrame(self.MC,3000,parent=self.workingFrame)
-        self.foo=rangedFrame(self.MC,3000,parent=self.rangedFrame)
+        # TODO configure filename separation for print (e.g. each element of array separated by comma, convert to string)
+        self.undoStack=QUndoStack(self)
+        commandLoad=CommandLoad(m2c, rangemethod, knownelemstr, maxchargestate, 'Load: (%s)' %filenames, self.dataset)
+        self.undoStack.push(commandLoad) #Calls the 'redo' method
+            #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
+
+        self.stackView=QUndoView(self.undoStack, parent=self.stackView)
+        # stackView(self.undoStack)
+
+    @pyqtSlot(str,str,int,int)
+    def on_load(self,filename,knownelemstr,maxcsint,rangemethodint):
+        self.dataset.load(filename,knownelemstr,maxcsint,rangemethodint)
+        self.plotWidget=workingFrame(self.dataset,3000,parent=self.workingFrame)
+        self.foo=rangedFrame(self.dataset,3000,parent=self.rangedFrame)
+        self.suggest.connect(self.plotWidget.on_suggest)
+
+    # @pyqtSlot(np.ndarray, int, int, str, int)
+    # def on_loaded(self, m2c,length,rangemethod,knownelemstr, maxchargestate):
+    #     self.dataset.load(m2c, length,rangemethod, knownelemstr, maxchargestate)
+    #     self.plotWidget=workingFrame(self.dataset,3000,parent=self.workingFrame)
+    #     self.foo=rangedFrame(self.dataset,3000,parent=self.rangedFrame)
+    #     self.suggest.connect(self.plotWidget.on_suggest) #NOTE this will only work if something has been loaded into plotwidget...
+    #             #consider this for future implementation
+
 
     @pyqtSignature("") # Must be included even if ""
     def on_actionLoad_triggered(self):
         loadDlg=load.loadDialog()
-        loadDlg.loaded.connect(self.on_loaded)
+        loadDlg.loaded.connect(self.on_loaded) #TODO is this needed?
         loadDlg.setModal(True) #see how this actually affects things later
         loadDlg.exec_()
 
     @pyqtSignature("") # Must be included even if ""
+    def on_actionUndo_triggered(self):
+        print("undo triggered")
+        self.dataset.undo()
+
+    @pyqtSignature("") # Must be included even if ""
     def on_suggestButton_clicked(self):
-        element=str(self.knownelementsLineEdit.text())
-        self.suggest.connect(self.plotWidget.on_suggest)
-        if element == 'Al':
-            elmasses=np.array([25.986892,26.981538]) # stable for more than 7s
-            elnames=np.array(['Al 26', 'Al 27'])
-            self.suggest.emit(elmasses, elnames)
+        self.dataset.load_suggest(str(self.knownelementsLineEdit.text()), int(str(self.maxchargestateLineEdit.text())))
+        self.suggest.emit(self.dataset.suggestelems,self.dataset.suggestmcs)
 
     def updateUi(self):
         enable=not self.knownelementsLineEdit.text().isEmpty() #TODO #add suggestLineEdit test as well
@@ -84,12 +104,18 @@ class workingFrame(QMainWindow):
 
         self.ax=self.fig.add_subplot(111)
         self.ax.hold(False)
-        self.ax.hist(data,bins,histtype='step')
-        self.ax.set_yscale('log')
+        self.bins = bins
+        data.m2c_updated.connect(self.on_dataset_m2c_updated)
 
         self.colors=cycle(list('rybmc'))
         self.ss=SpanSelector(self.ax,self.onselect,'horizontal')
         self.canvas.draw()
+
+    @pyqtSlot(np.ndarray)
+    def on_dataset_m2c_updated(self, m2c):
+        print("model update loopback")
+        self.ax.hist(m2c, self.bins, histtype='step')
+        self.ax.set_yscale('log')
 
     def onselect(self,x0,x1):
         self.ax.axvspan(x0,x1, facecolor=next(self.colors), alpha=0.5)
@@ -102,16 +128,27 @@ class workingFrame(QMainWindow):
         # http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
         key_press_handler(event, self.canvas, self.mpl_toolbar)
 
-    @pyqtSlot(np.ndarray, np.ndarray)
-    def on_suggest(self,elmasses, elnames):
-        #could remove additional entries but need to think more deeply about MVC structure
-        #and saving data
+    @pyqtSlot(list,int)
+    def on_suggest(self,elements,mcs):
         self.ax.hold(False)
-        linecolor=next(self.colors)
-        for i in np.arange(len(elmasses)):
-            self.ax.axvline(elmasses[i], color=linecolor, label=elnames[i])
-            self.fig.canvas.draw_idle()
-        self.ax.legend()
+        _lookup=dict(Al=[(27,26.98,100)],Cr=[(50,49.95,4.3),(52,51.94,83.8),(53,52.94,9.5),(54,53.94,2.4)],H=[(1,1.008,99.985),(2,2.014,0.015)])
+        for i in np.arange(len(elements)):
+            linecolor=next(self.colors)
+            records=_lookup[elements[i]]
+            name=np.empty(len(records)*mcs,dtype=object)
+            m2c=np.empty(len(records)*mcs)
+
+            for k in np.arange(mcs)+1:
+                for j in np.arange(len(records)):
+                    name[j+((k-1)*len(records))]=str(records[j][0])+elements[i]+'+'+str(k) #concat with element name and charge state
+                    m2c[j+((k-1)*len(records))]=records[j][1]/k
+
+            for l in np.arange(len(records*mcs)):
+                self.ax.axvline(m2c[l], color=linecolor)
+                self.ax.text(m2c[l],100,name[l],fontsize=10) #TODO TREAT OVERLAPPING SOMEHOW
+                # #TODO keep labels centered on line (x position), and at top relative to window size! (y position)
+                self.fig.canvas.draw_idle()
+                # # print(self.ax.get_ylim())
 
 class rangedFrame(QMainWindow):
 
@@ -129,7 +166,7 @@ class rangedFrame(QMainWindow):
 
         ax=self.fig.add_subplot(111)
         ax.hold(False)
-        ax.hist(data,bins,histtype='step')
+        ax.hist(data.m2c,bins,histtype='step')
         self.canvas.draw()
 
 app=QApplication(sys.argv)
