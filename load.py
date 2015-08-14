@@ -4,18 +4,41 @@ import ui_mainwindow
 import ui_posloader
 import aptread.aptload
 import numpy as np
+from commands import *
 
-class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
-    # Rarely need in Python, but useful in this case
+class loadDialog(QDialog, ui_posloader.Ui_loadDialog):
 
-    load=pyqtSignal(str,str,int,int)
+    loaded=pyqtSignal()
 
-    # loaded=pyqtSignal(np.ndarray, int, int, str, int)
+    # METHODS = {
+    #     "Manual": {},
+    #     TheOnlyMethodWeSlightlyHaveAClueAboutExceptWeDoNotKnowItsName: {
+    #         max_charge_state: (type=int, label="Max Charge State"),
+    #         known_elements: (type=str, label="Known Elements"),
+    #
+    #     }
+    # }
+    #
+    #
+    # if lineedit returns Manual()
+    #     method=Manual()
+    #
+    # method = TheOnlyMethodWeSlightlyHaveAClueAboutExceptWeDoNotKnowItsName(
+    #     max_charge_state: 12,
+    #     known_elements: "whateverthepersontyped",
+    #
+    # )
+    #
+    # method = Manual()
 
-    def __init__(self, parent=None):
+
+    def __init__(self, dataset, undostack, parent=None):
         super(loadDialog, self).__init__(parent)
         self.setupUi(self)
         self.posButton.setDefault(True)
+
+        self.undoStack=undostack
+        self.dataset=dataset
         self._posFilename=''
         self._rangemethod=-1
 
@@ -45,11 +68,17 @@ class loadDialog(QDialog, ui_posloader.Ui_loadDialog): # Multiple inheritance
 
                 posFilename=list(self._posFilename)
                 knownelements=list(_knownelements)
-                maxchargestate=list(_maxchargestate)
-                rangemethod=list(self._rangemethod)
-                self.load.emit(posFilename, knownelements, maxchargestate, rangemethod)
-                # self.loaded.emit(WM.MC, WM.LEN, self._rangemethod, knownelements, maxchargestate)
+                maxchargestate=_maxchargestate
+                rangemethod=self._rangemethod
+
+                # TODO make sure filenames is now a list or array with each file loaded
+                commandLoad=CommandLoad(posFilename, rangemethod, self.dataset)
+                self.undoStack.push(commandLoad) #Calls the 'redo' method
+                #     #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
+
+                loaded.emit()
                 loadDialog.reject(self) #USE done() and implement flag
+
             except aptread.aptload.APReadError:
                 self.QErrorMessage.showMessage('Error reading pos file(s). Check files and file path.')
 

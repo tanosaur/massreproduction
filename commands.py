@@ -3,46 +3,76 @@ import numpy as np
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
 
-# class StackView(QUndoView):
-#
-#     def __init__(self, undostack, parent):
-#         super(StackView, self).__init__(parent)
 
-class CommandSuggest(QUndoCommand):
-    def __init__(self, knownelements, maxchargestate, dataset):
-        super(CommandSuggest, self).__init__('Suggest ions')
+class CommandAddIonsToTable(QUndoCommand):
+    def __init__(self,ion_names,dataset):
 
-        self.knownelements = knownelements
-        self.maxchargestate = maxchargestate
-        self.dataset = dataset
+        super(CommandAddIonsToTable, self).__init__('Add {0}'.format(','.join(ion_names)))
+        self.ion_names=ion_names
+        self.dataset=dataset
 
     def redo(self):
-        self._original_suggestions = list(self.dataset.suggestions)
-        self.dataset.load_suggest(self.knownelements, self.maxchargestate)
-        self.dataset.suggest.emit(self.dataset.suggestions)
+        self._original_ions_in_table=list(self.dataset.ionsintable)
+        self.dataset.set_ionsintable(self.ion_names)
+        self.dataset.range_table_updated.emit(self.dataset.ionsintable)
 
     def undo(self):
-        self.dataset.suggestions = self._original_suggestions
-        self.dataset.suggest.emit(self.dataset.suggestions)
+        self.dataset.ionsintable=self._original_ions_in_table
+        self.dataset.range_table_updated.emit(self.dataset.ionsintable)
+
+
+class CommandRemoveIonsFromTree(QUndoCommand):
+    pass
+
+class CommandSuggest(QUndoCommand):
+
+    def __init__(self, knownelemstring, maxcsint, dataset):
+        super(CommandSuggest, self).__init__('Suggest {0} ({1})'.format(knownelemstring,maxcsint))
+        self.knownelemstring=knownelemstring
+        self.maxcs=maxcsint
+        self.dataset=dataset
+        self._original_names=None
+        self._original_maxcs=None
+        self._original_allnames=None
+        self._original_suggestedelements=None
+
+    def redo(self):
+        self._original_m2cs=np.copy(self.dataset.m2cs)
+        self._original_names=np.copy(self.dataset.names)
+        self._original_allnames=np.copy(self.dataset.allnames)
+        # self._original_suggestedelements=list(self.dataset.suggestedelements)
+        self.dataset.load_suggest(self.knownelemstring,self.maxcs)
+        self.dataset.suggest.emit(self.dataset.m2cs, self.dataset.names)
+        self.dataset.ion_list_updated.emit(self.dataset.allnames, self.dataset.suggestedelements)
+
+
+    def undo(self):
+        self.dataset.m2cs=np.copy(self._original_m2cs)
+        self.dataset.names=np.copy(self._original_names)
+        self.dataset.allnames=np.copy(self._original_allnames)
+        # self.dataset.suggestedelements=self._original.suggestedelements
+        self.dataset.suggest.emit(self.dataset.m2cs, self.dataset.names)
+        self.dataset.ion_list_updated.emit(self.dataset.allnames, self.dataset.suggestedelements)
 
 class CommandLoad(QUndoCommand):
 
-    def __init__(self, data, method, knownelemstring, maxchargestate, description, dataset):
-        super(CommandLoad, self).__init__(description)
+    def __init__(self, filenames, knownelemstring, maxchargestate, method, dataset):
+        super(CommandLoad, self).__init__('Load (%s)' %filenames)
 
         self.data=data
         self.meth=method
         self.maxcs=maxchargestate
         self.knownelemstring=knownelemstring
-        self.dataset=dataset #TODO Ask Scott
+        self.dataset=dataset
 
-        # Had to do this because redo and undo could only take in 1 argument, self.
         self._original_m2c = None
 
     def redo(self):
-        self._original_m2c = list(self.dataset.m2c) # BEFORE LOAD
+        self._original_m2c=list(self.dataset.m2c)
         self.dataset.load(self.data,self.meth,self.knownelemstring,self.maxcs)
-        self.dataset.m2c_updated.emit(self.dataset.m2c) # AFTER LOAD
+        self.dataset.m2c_updated.emit(self.dataset.m2c)
+
+        #self.dataset.method.rangefunction(self.dataset.m2c) #somethinglikethis
 
         if self.dataset.method==1:
             pass
@@ -65,5 +95,5 @@ class CommandLoad(QUndoCommand):
 
 
     def undo(self):
-        self.dataset.m2c = self._original_m2c
+        self.dataset.m2c=np.asarray(self._original_m2c)
         self.dataset.m2c_updated.emit(self.dataset.m2c)
