@@ -32,7 +32,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
         self.dataset = DataSet(self)
-        filenames='/Users/claratan/OneDrive/GUI/data/R04.pos' #TODO change so that
+        filenames='/Users/sojung/OneDrive/MassRep/data/R04.pos' #TODO change so that
             #multiple files added append to array
             #combine the data, then set as m2c and configure length!
         m2c=aptread.aptload.APData(filenames).pos.mc
