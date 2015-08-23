@@ -61,22 +61,20 @@ class CommandSuggest(QUndoCommand):
         self.suggest_model.replace(self._old_known_elements,self._old_max_charge_state)
 
 class CommandAddIonsToTable(QUndoCommand):
-    def __init__(self,ion_names,suggest_model):
+    def __init__(self,ion_names, range_table_model):
 
         super(CommandAddIonsToTable, self).__init__('Add {0}'.format(','.join(ion_names)))
 
+        self.range_table_model=range_table_model
+        
         self.ion_names=ion_names
-        self.suggest_model=suggest_model
+        self.old_ion_names=None
 
     def redo(self):
-        self._old_ions_in_table=list(self.suggest_model.ionsintable)
-        self.suggest_model.set_ionsintable(self.ion_names)
-        self.suggest_model.range_table_updated.emit(self.suggest_model.ionsintable)
+        self._old_ions_names = self.range_table_model.update_ions(self.ion_names)
 
     def undo(self):
-        self.suggest_model.ionsintable=self._old_ions_in_table
-        self.suggest_model.range_table_updated.emit(self.suggest_model.ionsintable)
-
+        self.range_table_model.update_ions(self.old_ion_names)
 
 class CommandRemoveIonsFromTree(QUndoCommand):
     pass

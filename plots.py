@@ -39,12 +39,10 @@ class WorkingFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self._plot_parameters = PlotParameters([], 1, [])
+        self.ax = self.fig.add_subplot(111)
         self._make_plot(self._plot_parameters)
-
-
         self.ss=SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001)
         # TODO add to make_plot
-
 
     # def onpick(event):
     #     if isinstance(event.artist, SpanSelector):
@@ -71,16 +69,17 @@ class WorkingFrame(QMainWindow):
         return self._plot_parameters
 
     def _make_plot(self, plot_parameters):
-        self.fig.clf()
-        self.ax = self.fig.add_subplot(111)
-        self.ax.hold(False)
+        # Previously, instantiating self.ax here and then
+        # self.fig.clf()
+
+        self.ax.cla()
+
         self.lines = 0
 
         if plot_parameters.m2c:
             self.ax.hist(plot_parameters.m2c, plot_parameters.bin_size, histtype='step')
 
         self.ax.set_yscale('log')
-        self.canvas.draw()
 
         if plot_parameters.suggested_ions:
             # self.ax.lines=[] # Necessary to clear the lines and labels for every undo/redo.
@@ -95,7 +94,7 @@ class WorkingFrame(QMainWindow):
                     self.ax.axvline(m2c, color=line_color)
                     self.ax.text(m2c, 100, label, fontsize=10)
 
-            self.fig.canvas.draw()
+        self.canvas.draw()
 
     @pyqtSlot(list)
     def on_m2c_updated(self, m2c):

@@ -44,13 +44,6 @@ class Node(object):
     def abundance(self):
         return self._abundance
 
-    def label_and_abundance(self):
-        if self._abundance:
-            concat=self._name + '\t' + self._abundance + '%'
-            return concat
-        else:
-            return self._name
-
     def setName(self, name):
         self._name = name
 
@@ -67,28 +60,6 @@ class Node(object):
         if self._parent is not None:
             return self._parent._children.index(self)
 
-    # Just to visualise our exercise
-    def log(self, tabLevel=-1): # Increase the tab level before recursing any children
-    # And then decrease the tab level
-
-        output     = ""
-        tabLevel += 1
-
-        for i in range(tabLevel):
-            output += "\t" # Increase tab count at output text
-
-        output += "|------" + self._name + "\n" # Add name of current node and line break
-
-        for child in self._children:
-            output += child.log(tabLevel)
-
-        tabLevel -= 1
-        output += "\n"
-
-        return output
-
-    def __repr__(self):
-        return self.log()
 
 class IonListModel(QtCore.QAbstractItemModel):
     def __init__(self, root, parent=None):
@@ -108,7 +79,7 @@ class IonListModel(QtCore.QAbstractItemModel):
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
     def columnCount(self, parent):
-        return 1
+        return 3
 
     """INPUTS: QModelIndex, int"""
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
@@ -121,11 +92,15 @@ class IonListModel(QtCore.QAbstractItemModel):
 
         if role == QtCore.Qt.DisplayRole:
             if index.column() == 0:
-                return node.label_and_abundance()
+                return node.name()
+            if index.column() == 1 and node.abundance():
+                return node.abundance()
 
         if role == QtCore.Qt.EditRole:
             if index.column() == 0:
-                return node.name(), node.abundance()
+                return node.name()
+            if index.column() == 1 and node.abundance():
+                return node.abundance()
 
         if role == QtCore.Qt.DecorationRole:
             pass
@@ -152,7 +127,8 @@ class IonListModel(QtCore.QAbstractItemModel):
         if role == QtCore.Qt.DisplayRole:
             if section == 0 and orientation==QtCore.Qt.Horizontal:
                 return "Ion"
-
+            if section == 1 and orientation==QtCore.Qt.Horizontal:
+                return "Abundance (%)"
 
     """INPUTS: QModelIndex"""
     """OUTPUT: int (flag)"""

@@ -1,6 +1,3 @@
-import cProfile
-import traceback
-
 from PyQt4.QtCore import *
 from PyQt4 import QtCore
 from PyQt4.QtGui import *
@@ -11,7 +8,7 @@ import ui_historywidget #TODO implement
 
 from plots import WorkingFrame, RangedFrame
 from commands import *
-from dataset import m2cModel, SuggestModel, BinSizeModel
+from dataset import m2cModel, SuggestModel, BinSizeModel, aRangeTableModel
 from nodetrees import Node, IonListModel, Node2, RangeTableModel
 import numpy as np #TODO get rid of when not needed anymore
 
@@ -27,6 +24,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.m2c_model = m2cModel(self)
         self.suggest_model = SuggestModel(self)
         self.bin_size_model = BinSizeModel(self)
+        self.range_table_model = aRangeTableModel(self)
 
         self.undoStack = QUndoStack(self)
         self.history_view = QUndoView(self.undoStack, parent=self.stackView)
@@ -37,15 +35,22 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
         # SIGNAL/SLOT CONNECTS
         self.suggest_model.connect_signals_to_slots(self.working_frame.on_suggest_updated, self.on_suggest_updated)
-        # self.m2c_model.ion_list_updated.connect(self.on_ionlist_updated_add_nodes)
-        # self.m2c_model.range_table_updated.connect(self.on_range_table_updated)
         self.m2c_model.connect_signals_to_slots(self.working_frame.on_m2c_updated)
         self.bin_size_model.connect_signals_to_slots(self.working_frame.on_bin_size_updated)
+        self.range_table_model.connect_signals_to_slots(self.on_range_table_updated)
 
         # DEFAULTS
         self.binsizeSpinBox.setMaximum(BinSizeModel.constraints.maximum)
         self.binsizeSpinBox.setMinimum(BinSizeModel.constraints.minimum)
         self.binsizeSpinBox.setValue(BinSizeModel.constraints.default)
+
+        ion_list_root=Node('IonList')
+        ion_list=IonListModel(ion_list_root)
+        self.ionlistTree.setModel(ion_list)
+
+        self.range_table_root=Node2('RangeList', '', '', '')
+        self.range_table=RangeTableModel(self.range_table_root)
+        self.rangedTable.setModel(self.range_table)
 
     @pyqtSignature("") # Must be included even if ""
     def on_actionLoad_triggered(self):
@@ -70,38 +75,43 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot(dict)
     def on_suggest_updated(self, suggested_ions):
-        root=Node('IonList')
-        for element in suggested_ions.keys():
-            element_node=Node(element, root)
-            ions=suggested_ions[element]
-            for ion in range(len(ions)):
-                label, m2c, abundance = ions[ion]
+        ion_list_root=Node('IonList')
+
+        for element, ions in suggested_ions.items():
+            element_node=Node(element, ion_list_root)
+            for ion in ions:
+                label, m2c, abundance = ion
                 Node(label,element_node,str(abundance))
 
-        ion_model=IonListModel(root)
+        ion_list=IonListModel(ion_list_root)
+        self.ionlistTree.setModel(ion_list)
 
-        self.ionlistTree.setModel(ion_model)
         self.ionlistTree.setSelectionMode(3)
+        self.ionlistTree.expandAll()
+        self.ionlistTree.setSortingEnabled(True)
+        self.ionlistTree.sortByColumn(1, 0) # TODO not working, set first column spanned?
 
-    @pyqtSignature("") # Must be included even if ""
+    @pyqtSignature("")
     def on_addionsButton_clicked(self):
-        # Retrieve highlighted labels
-        # Add the name and suggest m2c to the table
-        qmodel_indices=self.ionlistTree.selectedIndexes()
-        refs=[self.ionlistData.data(x, role=QtCore.Qt.DisplayRole) for x in qmodel_indices]
-        commandAddIons=CommandAddIonsToTable(refs, self.m2c_model)
-        self.undoStack.push(commandAddIons)
+        qmodel_indices=self.ionlistTree.selectedIndexes() # Retrieve highlighted labels
+
+        # ions = [index.internalPointer().ion for index in qmodel_indices]
+        # for ion in ions:
+        #     print(ion.name)
+        #     print(ion.m2c)
+        #     print(ion.abundance)
+
+        # names =[self.ion_list.data(x, role=QtCore.Qt.DisplayRole) for x in qmodel_indices]
+        # commandAddIons=CommandAddIonsToTable(refs, self.range_table_model) # Add the name to the table
+        # self.undoStack.push(commandAddIons)
 
     @pyqtSlot(list)
-    def on_range_table_updated(self,ionlist):
-        self.tableNode=Node2('RangeList', '', '', '')
-
-        for line in ionlist:
+    def on_range_table_updated(self, ion_names):
+        for line in ion_names:
             for x in line:
-                Node2(x, '', '', '',self.tableNode)
+                Node2(x, '', '', '',self.range_table_root)
 
-        self.rangelistData=RangeTableModel(self.tableNode)
-        self.rangedTable.setModel(self.rangelistData)
+        self.rangedTable.setModel(self.range_table)
 
 
     # @pyqtSignature("") # Must be included even if ""
@@ -142,5 +152,4 @@ form=MainWindow()
 form.show()
 # s=MainWindow.RangedFrame.size()
 # MainWindow.plotWidget.setGeometry(1,1, s.width()-2, s.height()-2)
-cProfile.run("app.exec_()")
-# app.exec_()
+app.exec_()

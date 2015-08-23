@@ -27,6 +27,13 @@ class m2cModel(QObject):
 
 class SuggestModel(QObject):
     suggest_updated = pyqtSignal(dict)
+    # Ions = namedtuple('Ions', 'name m2c abundance')
+    # ions = Ions(
+    #     maximum = 9000,
+    #     default = 1000,
+    #     minimum = 0
+    # )
+
 
     def __init__(self, parent=None):
         super(SuggestModel, self).__init__(parent)
@@ -99,6 +106,27 @@ class BinSizeModel(QObject):
     def connect_signals_to_slots(self,*args):
         for view_action in args:
             self.bin_size_updated.connect(view_action)
+
+class aRangeTableModel(QObject):
+    range_table_updated = pyqtSignal(list)
+
+    def __init__(self, parent=None):
+        super(aRangeTableModel, self).__init__(parent)
+
+        self.names=[]
+
+    def update_ions(self, added_ions):
+        existing_names = self.names
+        self.names.append(added_ions)
+
+        self.range_table_updated.emit(self.names)
+
+        return existing_names
+
+    def connect_signals_to_slots(self,*args):
+        for view_action in args:
+            self.range_table_updated.connect(view_action)
+
 
 class TestDataSet(unittest.TestCase):
 
