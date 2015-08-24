@@ -10,10 +10,12 @@ from matplotlib.figure import Figure
 from matplotlib.backends import qt_compat
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.widgets import SpanSelector
+from matplotlib import rcParams
 
 from itertools import cycle
 from collections import namedtuple
-# matplotlib.rcParams['keymap.pan'] = u'super+p'
+
+rcParams['keymap.save'] = u'super+s'
 
 PlotParameters = namedtuple('PlotParameters', 'm2c bin_size suggested_ions')
 
@@ -29,7 +31,9 @@ class WorkingFrame(QMainWindow):
         self.canvas.setFocus()
 
         self.mpl_toolbar = NavigationToolbar(self.canvas, parent)
+
         self.canvas.mpl_connect('key_press_event', self.on_key_press)
+        self.canvas.mpl_connect('pick_event', self.on_pick)
         # self.canvas.mpl_connect('pick_event', self.onpick)
         # self.canvas.mpl_connect('button_press_event', self.onclick)
 
@@ -41,8 +45,8 @@ class WorkingFrame(QMainWindow):
         self._plot_parameters = PlotParameters([], 1, [])
         self.ax = self.fig.add_subplot(111)
         self._make_plot(self._plot_parameters)
-        self.ss=SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001)
-        # TODO add to make_plot
+
+        self._picked_object = None
 
     # def onpick(event):
     #     if isinstance(event.artist, SpanSelector):
@@ -59,19 +63,12 @@ class WorkingFrame(QMainWindow):
     # def onclick(event):
     #     print ('button=%d, x=%d, y=%d, xdata=%f, ydata=%f'%(event.button, event.x, event.y, event.xdata, event.ydata))
 
-# 1. load new window, frame but nothing it
-# 2. load m2c but default bins
-# 3. change bins but same m2c and save the zoom
-
     def _cache_plot_parameters(self, **kwargs):
         # Store most recently passed values
         self._plot_parameters = self._plot_parameters._replace(**kwargs)
         return self._plot_parameters
 
     def _make_plot(self, plot_parameters):
-        # Previously, instantiating self.ax here and then
-        # self.fig.clf()
-
         self.ax.cla()
 
         self.lines = 0
@@ -91,8 +88,8 @@ class WorkingFrame(QMainWindow):
                 ions=plot_parameters.suggested_ions[element]
                 for ion in range(len(ions)):
                     label, m2c, abundance = ions[ion]
-                    self.ax.axvline(m2c, color=line_color)
-                    self.ax.text(m2c, 100, label, fontsize=10)
+                    self.ax.axvline(m2c, color=line_color, picker=0.5)
+                    self.ax.text(m2c, 100, label, fontsize=10, picker=0.3)
 
         self.canvas.draw()
 
@@ -114,15 +111,21 @@ class WorkingFrame(QMainWindow):
         self._make_plot(plot_parameters)
 
     def on_span_select(self,x0,x1):
-        self.ax.axvspan(x0,x1, facecolor=next(self.colors), alpha=0.5)
+        self.ax.axvspan(x0,x1, facecolor='c', alpha=0.5)
         print(x0,x1)
-        self.fig.canvas.draw_idle() #keeps the selection drawn on
 
     def on_key_press(self, event):
-        print('you pressed', event.key)
+        print('You pressed %s' % (event.key))
         # implement the default mpl key press events described at
         # http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
         key_press_handler(event, self.canvas, self.mpl_toolbar)
+
+        if event.key == 's':
+            self.ss=SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True)
+
+    def on_pick(self, event):
+        self._picked_object=event.artist
+
 
 class RangedFrame(QMainWindow):
 

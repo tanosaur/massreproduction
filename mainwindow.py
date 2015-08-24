@@ -4,8 +4,6 @@ from PyQt4.QtGui import *
 import sys
 
 import ui_mainwindow
-import ui_historywidget #TODO implement
-
 from plots import WorkingFrame, RangedFrame
 from commands import *
 from dataset import m2cModel, SuggestModel, BinSizeModel, aRangeTableModel
@@ -55,9 +53,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSignature("") # Must be included even if ""
     def on_actionLoad_triggered(self):
         pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
-        commandLoadData=CommandLoadData(pos_filename, self.m2c_model)
-        self.undoStack.push(commandLoadData) #Calls the 'redo' method
-        #     #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
+        if pos_filename:
+            commandLoadData=CommandLoadData(pos_filename, self.m2c_model)
+            self.undoStack.push(commandLoadData) #Calls the 'redo' method
+            #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
 
     @pyqtSlot(int)
     def on_binsizeSpinBox_valueChanged(self, bin_size):

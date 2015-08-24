@@ -25,7 +25,7 @@ class POS():
         try:
             with open(fn, 'rb') as content_file:
                 pos_raw = content_file.read()
-        except (IOError, FileNotFoundError):
+        except (IOError, OSError):
             raise ReadError('Error opening pos file %s' % fn)
             return
 

@@ -117,7 +117,7 @@ class Node(object):
 class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt tree views
     def __init__(self, suggested_ions):
         super(IonListModel, self).__init__(None)
-        self._suggestion_ions = suggested_ions
+        self._suggested_ions = suggested_ions
         self._root_node = Node('IonList')
 
         for element, ions in suggested_ions.items():
@@ -129,11 +129,23 @@ class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt 
 
     def index(self, row, column, parent): #int, int, QModelIndex
         # print("Index: %s %s %s" % (row, column, parent))
-
+        # item = None
+        #
+        # if parent.isValid():
+        #     item = parent.internalPointer()
+        #     if self._suggested_ions.has_key(item):
+        #         print(item)
+        #         return self.createIndex(row, column, item.child(row))
+        #     else:
+        #         print(item)
+        #         return self.createIndex(row, column, item.child(row))
+        #
+        # else:
+        #     print()
+        #     return QtCore.QModelIndex() # Root -> return empty index
+        #
         parentNode = self._getNode(parent)
-
         childItem = parentNode.child(row)
-
         if childItem: # Wrap in Q Model index and return
             return self.createIndex(row, column, childItem)
         else:
