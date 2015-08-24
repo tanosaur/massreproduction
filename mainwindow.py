@@ -9,7 +9,8 @@ import ui_historywidget #TODO implement
 from plots import WorkingFrame, RangedFrame
 from commands import *
 from dataset import m2cModel, SuggestModel, BinSizeModel, aRangeTableModel
-from nodetrees import Node, IonListModel, Node2, RangeTableModel
+from nodetrees import Node, IonListModel
+from tabletree import Node2, RangeTableModel
 import numpy as np #TODO get rid of when not needed anymore
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
@@ -129,14 +130,11 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         print("redo triggered")
         self.undoStack.redo()
 
-    def updateUi(self):
-        enable=not self.knownelementsLineEdit.text().isEmpty() #TODO #add suggestLineEdit test as well
-        # Enables the 'Suggest' button
-        self.suggestButton.setEnabled(enable) #TODO initially disable this and also load button
-
     @pyqtSignature("QString")
-    def on_knownelementsLineEdit_textEdited(self,text):
-        self.updateUi()
+    def on_maxchargestateLineEdit_textEdited(self,text):
+        enable=not self.maxchargestateLineEdit.text().isEmpty()
+        self.suggestButton.setEnabled(enable) #TODO initially disable this
+        self.suggestButton.setFocus()
 
 app=QApplication(sys.argv)
 form=MainWindow()

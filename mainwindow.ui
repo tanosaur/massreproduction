@@ -365,8 +365,14 @@
                 </item>
                 <item>
                  <widget class="QPushButton" name="suggestButton">
+                  <property name="enabled">
+                   <bool>false</bool>
+                  </property>
                   <property name="text">
                    <string>Suggest</string>
+                  </property>
+                  <property name="default">
+                   <bool>true</bool>
                   </property>
                  </widget>
                 </item>
@@ -424,6 +430,9 @@
                  <layout class="QVBoxLayout" name="verticalLayout_6">
                   <item>
                    <widget class="QPushButton" name="addionsButton">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="text">
                      <string>Add</string>
                     </property>
@@ -431,6 +440,9 @@
                   </item>
                   <item>
                    <widget class="QPushButton" name="removeionsButton">
+                    <property name="enabled">
+                     <bool>false</bool>
+                    </property>
                     <property name="text">
                      <string>Remove</string>
                     </property>

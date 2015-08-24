@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'mainwindow2.ui'
+# Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Wed Aug 19 10:53:37 2015
+# Created: Mon Aug 24 20:42:07 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -200,6 +200,8 @@ class Ui_MainWindow(object):
         self.maxchargestateLineEdit.setObjectName(_fromUtf8("maxchargestateLineEdit"))
         self.verticalLayout_9.addWidget(self.maxchargestateLineEdit)
         self.suggestButton = QtGui.QPushButton(self.peakID_Tab)
+        self.suggestButton.setEnabled(False)
+        self.suggestButton.setDefault(True)
         self.suggestButton.setObjectName(_fromUtf8("suggestButton"))
         self.verticalLayout_9.addWidget(self.suggestButton)
         spacerItem2 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
@@ -224,9 +226,11 @@ class Ui_MainWindow(object):
         self.verticalLayout_6 = QtGui.QVBoxLayout()
         self.verticalLayout_6.setObjectName(_fromUtf8("verticalLayout_6"))
         self.addionsButton = QtGui.QPushButton(self.peakID_Tab)
+        self.addionsButton.setEnabled(False)
         self.addionsButton.setObjectName(_fromUtf8("addionsButton"))
         self.verticalLayout_6.addWidget(self.addionsButton)
         self.removeionsButton = QtGui.QPushButton(self.peakID_Tab)
+        self.removeionsButton.setEnabled(False)
         self.removeionsButton.setObjectName(_fromUtf8("removeionsButton"))
         self.verticalLayout_6.addWidget(self.removeionsButton)
         self.horizontalLayout_3.addLayout(self.verticalLayout_6)
