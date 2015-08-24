@@ -44,8 +44,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.binsizeSpinBox.setMinimum(BinSizeModel.constraints.minimum)
         self.binsizeSpinBox.setValue(BinSizeModel.constraints.default)
 
-        ion_list_root=Node('IonList')
-        ion_list=IonListModel(ion_list_root)
+        ion_list=IonListModel({})
         self.ionlistTree.setModel(ion_list)
 
         self.range_table_root=Node2('RangeList', '', '', '')
@@ -75,15 +74,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot(dict)
     def on_suggest_updated(self, suggested_ions):
-        ion_list_root=Node('IonList')
-
-        for element, ions in suggested_ions.items():
-            element_node=Node(element, ion_list_root)
-            for ion in ions:
-                label, m2c, abundance = ion
-                Node(label,element_node,str(abundance))
-
-        ion_list=IonListModel(ion_list_root)
+        ion_list=IonListModel(suggested_ions)
         self.ionlistTree.setModel(ion_list)
 
         self.ionlistTree.setSelectionMode(3)

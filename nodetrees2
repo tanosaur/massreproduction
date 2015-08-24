@@ -1,68 +1,3 @@
-# /----------------\
-# | Name | Age     |
-# +------+---------v+
-# | Scott| Ancient |
-# | Clara| Moulding|
-# \----------------/
-#
-# X
-# Y
-#     Z
-# B
-#
-#
-#
-#
-#
-# QtTableView
-#   QtModel
-#    + headers => QtArray{QtString}
-#    + data => QtArray row
-#                 QtArray column
-#                     QtString "Scott" or "Moulding"
-#
-#
-people = [["Scott", "Ancient"], ["Clara", "Moulding"]]
-
-# class MyViewModel:
-#     def __init__(self, people):
-#         self.people = people
-#
-#     def headers(self):
-#         array = QtArray()
-#         array.append("Name")
-#         array.append("Age")
-#         return array
-#
-#     def data(self, row, column):
-#         return QtString(people[row][column])
-#
-#     def index(self, row, column, parent):
-#         pass
-
-class MyViewModel:
-    def __init__(self, people):
-        self.people = people
-
-    def headers(self):
-        return ['Name','Age']
-
-    def data(self, row, column):
-        return people[row][column]
-
-    def index(self, row, column, parent):
-        pass
-
-#
-#
-#
-# rows = [
-#     [String, String],
-#     [String, String]
-# ]
-# row_1 = rows[0]
-# row_1_column_1 = rows[0][0] # Outermost is row, innermost is column
-
 from PyQt4 import QtCore
 
 class Node(object):
@@ -125,72 +60,33 @@ class Node(object):
         if self._parent is not None:
             return self._parent._children.index(self)
 
-# root_node
-#   Node name = Scott age = Timelies
-#   Node name Clara age = annyoung
-#
-# initial_index = QtModelIndex(row=0, column=0, pointer=None) # initialiser, creates a QIndex
-#
-# model=MyViewModel(people)
-#
-# model.index(row=0, column=0, parent=initial_index) ->>
-#     Index(row=0, column=0, pointer=ScottNode)
 
+class IonListModel(QtCore.QAbstractItemModel):
+    def __init__(self, root, parent=None):
+        super(IonListModel, self).__init__(parent)
+        self._rootNode = root
 
-class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt tree views
-    def __init__(self, suggested_ions):
-        super(IonListModel, self).__init__(None)
-        self._suggestion_ions = suggested_ions
-        self._root_node = Node('IonList')
-
-        for element, ions in suggested_ions.items():
-            element_node= Node(element, self._root_node)
-            for ion in ions:
-                label, m2c, abundance = ion
-                Node(label,element_node,str(abundance))
-
-
-    def index(self, row, column, parent): #int, int, QModelIndex
-        # print("Index: %s %s %s" % (row, column, parent))
-
-        parentNode = self._getNode(parent)
-
-        childItem = parentNode.child(row)
-
-        if childItem: # Wrap in Q Model index and return
-            return self.createIndex(row, column, childItem)
-        else:
-            return QtCore.QModelIndex() # Return empty index
-
-    def parent(self, index):
-
-        node = self._getNode(index)
-        parent_node = node.parent() # Return parent of the given index
-
-        if parent_node == self._root_node: # Check if parent node is the root node
-            return QtCore.QModelIndex() # Return empty index
-
-        # If not, it's a child -> create model # Only in 1 column [0]
-        return self.createIndex(parent_node.row(), 0, parent_node) # Return it
-
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
     def rowCount(self, parent):
         if not parent.isValid():
-            parent_node = self._root_node
+            parentNode = self._rootNode
         else:
-            parent_node = parent.internalPointer()
+            parentNode = parent.internalPointer()
 
-        return parent_node.childCount()
+        return parentNode.childCount()
 
-        # TODO Scott - how is childCount() giving the row when there are two items in each row?
-
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int"""
     def columnCount(self, parent):
-        return 2
+        return 3
 
+    """INPUTS: QModelIndex, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def data(self, index, role):
+
         if not index.isValid():
             return None
-            # None is interpreted as an invalid QVariant
-            # An invalid QVariant must be returned (not 0)
 
         node = index.internalPointer()
 
@@ -200,7 +96,33 @@ class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt 
             if index.column() == 1 and node.abundance():
                 return node.abundance()
 
+        if role == QtCore.Qt.EditRole:
+            if index.column() == 0:
+                return node.name()
+            if index.column() == 1 and node.abundance():
+                return node.abundance()
 
+        if role == QtCore.Qt.DecorationRole:
+            pass
+
+
+
+    """INPUTS: QModelIndex, QVariant, int (flag)"""
+    def setData(self, index, value, role=QtCore.Qt.EditRole):
+
+        if index.isValid():
+
+            if role == QtCore.Qt.EditRole:
+
+                node = index.internalPointer()
+                node.setName(value)
+
+                return True
+        return False
+
+
+    """INPUTS: int, Qt::Orientation, int"""
+    """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
     def headerData(self, section, orientation, role):
         if role == QtCore.Qt.DisplayRole:
             if section == 0 and orientation==QtCore.Qt.Horizontal:
@@ -208,13 +130,79 @@ class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt 
             if section == 1 and orientation==QtCore.Qt.Horizontal:
                 return "Abundance (%)"
 
-    def _getNode(self, index):
+    """INPUTS: QModelIndex"""
+    """OUTPUT: int (flag)"""
+    def flags(self, index):
+        return QtCore.Qt.ItemIsEnabled | QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEditable
+
+    """INPUTS: QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return the parent of the node with the given QModelIndex"""
+    def parent(self, index):
+
+        node = self.getNode(index)
+        parentNode = node.parent() # Return parent of the given index
+
+        if parentNode == self._rootNode: # Check parent node is the root node the Tree model holds
+            return QtCore.QModelIndex() # Wrap it around QModelIndex
+
+        # If not it's a child -> create model # Only in 1 column [0]
+        return self.createIndex(parentNode.row(), 0, parentNode) # Return it
+
+    """INPUTS: int, int, QModelIndex"""
+    """OUTPUT: QModelIndex"""
+    """Should return a QModelIndex that corresponds to the given row, column and parent node"""
+    def index(self, row, column, parent):
+
+        parentNode = self.getNode(parent)
+
+        childItem = parentNode.child(row)
+
+        if childItem: # Wrap in Q Model index and return
+            return self.createIndex(row, column, childItem)
+        else:
+            return QtCore.QModelIndex() # Return empty index
+
+    """CUSTOM"""
+    """INPUTS: QModelIndex"""
+    def getNode(self, index):
         if index.isValid():
-            node = index.internalPointer() # Item index was pointing to
+            node = index.internalPointer()
             if node:
                 return node
 
-        return self._root_node
+        return self._rootNode
+
+    """INPUTS: int, int, QModelIndex"""
+    def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
+
+        parentNode = self.getNode(parent)
+
+        self.beginInsertRows(parent, position, position + rows - 1)
+
+        for row in range(rows):
+
+            childCount = parentNode.childCount()
+            childNode = Node("untitled" + str(childCount))
+            success = parentNode.insertChild(position, childNode)
+
+        self.endInsertRows()
+
+        return success
+
+    """INPUTS: int, int, QModelIndex"""
+    def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
+
+        parentNode = self.getNode(parent)
+        self.beginRemoveRows(parent, position, position + rows - 1)
+
+        for row in range(rows):
+            success = parentNode.removeChild(position)
+
+        self.endRemoveRows()
+
+        return success
+
 
 class Node2(object):
 
@@ -326,27 +314,27 @@ class RangeTableModel(QtCore.QAbstractItemModel):
     """INPUTS: Node, QObject"""
     def __init__(self, root, parent=None):
         super(RangeTableModel, self).__init__(parent)
-        self._root_node = root
+        self._rootNode = root
 
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
     def rowCount(self, parent):
         if not parent.isValid():
-            parent_node = self._root_node
+            parentNode = self._rootNode
         else:
-            parent_node = parent.internalPointer()
+            parentNode = parent.internalPointer()
 
-        return parent_node.childCount()
+        return parentNode.childCount()
 
     """INPUTS: QModelIndex"""
     """OUTPUT: int"""
     def columnCount(self, parent):
         if not parent.isValid():
-            parent_node = self._root_node
+            parentNode = self._rootNode
         else:
-            parent_node = parent.internalPointer()
+            parentNode = parent.internalPointer()
 
-        return parent_node.columnCount()
+        return parentNode.columnCount()
 
     """INPUTS: QModelIndex, int"""
     """OUTPUT: QVariant, strings are cast to QString which is a QVariant"""
@@ -412,22 +400,22 @@ class RangeTableModel(QtCore.QAbstractItemModel):
     def parent(self, index):
 
         node = self.getNode(index)
-        parent_node = node.parent() # Return parent of the given index
+        parentNode = node.parent() # Return parent of the given index
 
-        if parent_node == self._root_node: # Check parent node is the root node the Tree model holds
+        if parentNode == self._rootNode: # Check parent node is the root node the Tree model holds
             return QtCore.QModelIndex() # Wrap it around QModelIndex
 
         # If not it's a child -> create model # Only in 1 column [0]
-        return self.createIndex(parent_node.row(), 0, parent_node) # Return it
+        return self.createIndex(parentNode.row(), 0, parentNode) # Return it
 
     """INPUTS: int, int, QModelIndex"""
     """OUTPUT: QModelIndex"""
     """Should return a QModelIndex that corresponds to the given row, column and parent node"""
     def index(self, row, column, parent):
 
-        parent_node = self.getNode(parent)
+        parentNode = self.getNode(parent)
 
-        childItem = parent_node.child(row)
+        childItem = parentNode.child(row)
 
 
         if childItem: # Wrap in Q Model index and return
@@ -445,21 +433,21 @@ class RangeTableModel(QtCore.QAbstractItemModel):
             if node:
                 return node
 
-        return self._root_node
+        return self._rootNode
 
 
     """INPUTS: int, int, QModelIndex"""
     def insertRows(self, position, rows, parent=QtCore.QModelIndex()):
 
-        parent_node = self.getNode(parent)
+        parentNode = self.getNode(parent)
 
         self.beginInsertRows(parent, position, position + rows - 1)
 
         for row in range(rows):
 
-            childCount = parent_node.childCount()
+            childCount = parentNode.childCount()
             childNode = Node("untitled" + str(childCount))
-            success = parent_node.insertChild(position, childNode)
+            success = parentNode.insertChild(position, childNode)
 
         self.endInsertRows()
 
@@ -467,15 +455,15 @@ class RangeTableModel(QtCore.QAbstractItemModel):
 
     def insertLights(self, position, rows, parent=QtCore.QModelIndex()):
 
-        parent_node = self.getNode(parent)
+        parentNode = self.getNode(parent)
 
         self.beginInsertRows(parent, position, position + rows - 1)
 
         for row in range(rows):
 
-            childCount = parent_node.childCount()
+            childCount = parentNode.childCount()
             childNode = LightNode("light" + str(childCount))
-            success = parent_node.insertChild(position, childNode)
+            success = parentNode.insertChild(position, childNode)
 
         self.endInsertRows()
 
@@ -484,11 +472,11 @@ class RangeTableModel(QtCore.QAbstractItemModel):
     """INPUTS: int, int, QModelIndex"""
     def removeRows(self, position, rows, parent=QtCore.QModelIndex()):
 
-        parent_node = self.getNode(parent)
+        parentNode = self.getNode(parent)
         self.beginRemoveRows(parent, position, position + rows - 1)
 
         for row in range(rows):
-            success = parent_node.removeChild(position)
+            success = parentNode.removeChild(position)
 
         self.endRemoveRows()
 

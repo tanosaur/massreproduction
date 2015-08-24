@@ -24,16 +24,14 @@ class m2cModel(QObject):
         for view_action in args:
             self.m2c_updated.connect(view_action)
 
-
 class SuggestModel(QObject):
     suggest_updated = pyqtSignal(dict)
-    # Ions = namedtuple('Ions', 'name m2c abundance')
-    # ions = Ions(
-    #     maximum = 9000,
-    #     default = 1000,
-    #     minimum = 0
-    # )
-
+    Ions = namedtuple('Ions', 'name m2c abundance')
+    _14Fe2 = Ions(
+        name = 9000,
+        m2c = 1000,
+        abundance = 0
+    )
 
     def __init__(self, parent=None):
         super(SuggestModel, self).__init__(parent)
