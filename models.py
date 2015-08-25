@@ -138,7 +138,7 @@ class LoadedM2CModel(QObject):
         self.updated.emit(self._m2cs)
 
 class BinSizeModel(QObject):
-    updated = pyqtSignal(int)
+    updated = pyqtSignal(BinSizeRecord)
 
     def __init__(self):
         super(BinSizeModel, self).__init__(None)

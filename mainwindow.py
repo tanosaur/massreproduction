@@ -8,12 +8,12 @@ import models
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, loaded_m2c_model, parent=None):
+    def __init__(self, loaded_m2c_model, bin_size_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
         self._loaded_m2c_model = loaded_m2c_model
-
+        self._bin_size_model = bin_size_model
         self.undoStack = QUndoStack(self)
         history_view = QUndoView(self.undoStack, parent=self.stackView)
         history_view.setEmptyLabel('New program')
@@ -33,7 +33,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot(int)
     def on_binsizeSpinBox_valueChanged(self, bin_size_value):
-        command = command.BinSizeValueChange(bin_size_value, self.bin_size_model)
+        command = commands.BinSizeValueChange(bin_size_value, self._bin_size_model)
         self.undoStack.push(command)
 
     @pyqtSlot()
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     loaded_m2c_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
 
-    main_window = MainWindow(loaded_m2c_model)
+    main_window = MainWindow(loaded_m2c_model, bin_size_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
@@ -74,6 +74,7 @@ if __name__ == '__main__':
     working_plot_view_model.updated.connect(working_frame.on_updated)
     loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
     # LoadedM2CModel -> FinalPlotViewModel.m2c
+    bin_size_model.updated.connect(main_window.on_bin_size_updated)
     bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
     # BinSizeModel -> FinalPlotViewModel.bin_size
     # AllRangesModel -> WorkingPlotViewModel.ranges

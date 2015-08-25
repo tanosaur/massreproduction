@@ -51,7 +51,6 @@ class WorkingFrame(QMainWindow):
         self.lines = 0
 
         if record.m2c:
-            print(record.bin_size)
             self.ax.hist(record.m2c, record.bin_size.value, histtype='step')
 
         self.ax.set_yscale('log')
