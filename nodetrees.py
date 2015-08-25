@@ -120,6 +120,7 @@ class IonListModel(QtCore.QAbstractItemModel): # QAbstractItemModel used for Qt 
         self._suggested_ions = suggested_ions
         self._root_node = Node('IonList')
 
+
         for element, ions in suggested_ions.items():
             element_node= Node(element, self._root_node)
             for ion in ions:

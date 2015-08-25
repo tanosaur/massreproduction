@@ -1,69 +1,42 @@
-from PyQt4.QtCore import *
-from PyQt4 import QtCore
-from PyQt4.QtGui import *
+from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog
 import sys
-
 import ui_mainwindow
 from plots import WorkingFrame, RangedFrame
-from commands import *
-from dataset import m2cModel, SuggestModel, BinSizeModel, aRangeTableModel
-from nodetrees import Node, IonListModel
-from tabletree import Node2, RangeTableModel
-import numpy as np #TODO get rid of when not needed anymore
+import commands
+import models
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, parent=None):
+    def __init__(self, loaded_m2c_model, parent=None):
         super(MainWindow, self).__init__(parent)
-
-        # Call setupUi to instantiate as in .ui (see ui_mainwindow.py)
         self.setupUi(self)
 
-        # INSTANCES
-        self.m2c_model = m2cModel(self)
-        self.suggest_model = SuggestModel(self)
-        self.bin_size_model = BinSizeModel(self)
-        self.range_table_model = aRangeTableModel(self)
+        self._loaded_m2c_model = loaded_m2c_model
 
         self.undoStack = QUndoStack(self)
-        self.history_view = QUndoView(self.undoStack, parent=self.stackView)
-        self.history_view.setEmptyLabel('New program')
+        history_view = QUndoView(self.undoStack, parent=self.stackView)
+        history_view.setEmptyLabel('New program')
 
-        self.working_frame=WorkingFrame(parent=self.workingFrame)
-        self.ranged_frame=RangedFrame(parent=self.rangedFrame)
+    @pyqtSlot(models.BinSizeRecord)
+    def on_bin_size_updated(self, bin_size):
+        self.binsizeSpinBox.setMaximum(bin_size.maximum)
+        self.binsizeSpinBox.setMinimum(bin_size.minimum)
+        self.binsizeSpinBox.setValue(bin_size.value)
 
-        # SIGNAL/SLOT CONNECTS
-        self.suggest_model.connect_signals_to_slots(self.working_frame.on_suggest_updated, self.on_suggest_updated)
-        self.m2c_model.connect_signals_to_slots(self.working_frame.on_m2c_updated)
-        self.bin_size_model.connect_signals_to_slots(self.working_frame.on_bin_size_updated)
-        self.range_table_model.connect_signals_to_slots(self.on_range_table_updated)
-
-        # DEFAULTS
-        self.binsizeSpinBox.setMaximum(BinSizeModel.constraints.maximum)
-        self.binsizeSpinBox.setMinimum(BinSizeModel.constraints.minimum)
-        self.binsizeSpinBox.setValue(BinSizeModel.constraints.default)
-
-        ion_list=IonListModel({})
-        self.ionlistTree.setModel(ion_list)
-
-        self.range_table_root=Node2('RangeList', '', '', '')
-        self.range_table=RangeTableModel(self.range_table_root)
-        self.rangedTable.setModel(self.range_table)
-
-    @pyqtSignature("") # Must be included even if ""
+    @pyqtSlot()
     def on_actionLoad_triggered(self):
         pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
         if pos_filename:
-            commandLoadData=CommandLoadData(pos_filename, self.m2c_model)
-            self.undoStack.push(commandLoadData) #Calls the 'redo' method
-            #see https://forum.qt.io/topic/12330/qundocommand-calls-redo-on-initialization/6
+            command = commands.LoadM2C(pos_filename, self._loaded_m2c_model)
+            self.undoStack.push(command)
 
     @pyqtSlot(int)
-    def on_binsizeSpinBox_valueChanged(self, bin_size):
-        commandBinSizeChange=CommandBinSizeChange(bin_size, self.bin_size_model, self.m2c_model)
-        self.undoStack.push(commandBinSizeChange)
+    def on_binsizeSpinBox_valueChanged(self, bin_size_value):
+        command = command.BinSizeValueChange(bin_size_value, self.bin_size_model)
+        self.undoStack.push(command)
 
-    @pyqtSignature("")
+    @pyqtSlot()
     def on_suggestButton_clicked(self):
         commandSuggest=CommandSuggest(
             str(self.knownelementsLineEdit.text()),
@@ -72,72 +45,47 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         )
         self.undoStack.push(commandSuggest)
 
-    @pyqtSlot(dict)
-    def on_suggest_updated(self, suggested_ions):
-        ion_list=IonListModel(suggested_ions)
-        self.ionlistTree.setModel(ion_list)
-
-        self.ionlistTree.setSelectionMode(3)
-        self.ionlistTree.expandAll()
-        self.ionlistTree.setSortingEnabled(True)
-        self.ionlistTree.sortByColumn(1, 0) # TODO not working, set first column spanned?
-
-    @pyqtSignature("")
-    def on_addionsButton_clicked(self):
-        qmodel_indices=self.ionlistTree.selectedIndexes() # Retrieve highlighted labels
-
-        # ions = [index.internalPointer().ion for index in qmodel_indices]
-        # for ion in ions:
-        #     print(ion.name)
-        #     print(ion.m2c)
-        #     print(ion.abundance)
-
-        # names =[self.ion_list.data(x, role=QtCore.Qt.DisplayRole) for x in qmodel_indices]
-        # commandAddIons=CommandAddIonsToTable(refs, self.range_table_model) # Add the name to the table
-        # self.undoStack.push(commandAddIons)
-
-    @pyqtSlot(list)
-    def on_range_table_updated(self, ion_names):
-        for line in ion_names:
-            for x in line:
-                Node2(x, '', '', '',self.range_table_root)
-
-        self.rangedTable.setModel(self.range_table)
-
-
-    # @pyqtSignature("") # Must be included even if ""
-    # def on_actionHistory_triggered(self):
-    #     histDlg=histWidget(self, self.undoStack)
-    #     histDlg.setModal(True) #see how this actually affects things later
-    #     histDlg.exec_() #TODO implement history view as new window or side window
-
-    @pyqtSignature("") # Must be included even if ""
-    def on_actionSave_As_triggered(self):
-        print("save as triggered")
-
-    @pyqtSignature("") # Must be included even if ""
-    def on_actionSave_triggered(self):
-        print("save triggered")
-
-    @pyqtSignature("") # Must be included even if ""
+    @pyqtSlot()
     def on_actionUndo_triggered(self):
-        print("undo triggered")
         self.undoStack.undo()
 
-    @pyqtSignature("") # Must be included even if ""
+    @pyqtSlot()
     def on_actionRedo_triggered(self):
-        print("redo triggered")
         self.undoStack.redo()
 
-    @pyqtSignature("QString")
-    def on_maxchargestateLineEdit_textEdited(self,text):
+    @pyqtSlot(str)
+    def on_maxchargestateLineEdit_textEdited(self):
         enable=not self.maxchargestateLineEdit.text().isEmpty()
         self.suggestButton.setEnabled(enable) #TODO initially disable this
         self.suggestButton.setFocus()
 
-app=QApplication(sys.argv)
-form=MainWindow()
-form.show()
-# s=MainWindow.RangedFrame.size()
-# MainWindow.plotWidget.setGeometry(1,1, s.width()-2, s.height()-2)
-app.exec_()
+if __name__ == '__main__':
+    app=QApplication(sys.argv)
+
+    loaded_m2c_model = models.LoadedM2CModel()
+    bin_size_model = models.BinSizeModel()
+
+    main_window = MainWindow(loaded_m2c_model)
+    working_frame = WorkingFrame(parent=main_window.workingFrame)
+    ranged_frame = RangedFrame(parent=main_window.rangedFrame)
+
+    working_plot_view_model = models.WorkingPlotViewModel()
+
+    working_plot_view_model.updated.connect(working_frame.on_updated)
+    loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
+    # LoadedM2CModel -> FinalPlotViewModel.m2c
+    bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
+    # BinSizeModel -> FinalPlotViewModel.bin_size
+    # AllRangesModel -> WorkingPlotViewModel.ranges
+    # AllRangesModel -> CommittedRangesModel
+    # CommittedRangesModel -> FinalPlotViewModel.ranges
+    # SuggestedIonsModel -> WorkingPlotViewModel.ions
+    # SuggestedIonsModel -> SuggestedIonsViewModel
+    # AllRangesModel -> AnalysesModel
+    # AnalysesModel -> AnalysesTableViewModel
+
+    loaded_m2c_model.prime()
+    bin_size_model.prime()
+
+    main_window.show()
+    app.exec_()

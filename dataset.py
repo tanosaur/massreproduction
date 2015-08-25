@@ -53,7 +53,7 @@ class SuggestModel(QObject):
     def suggest_ions(self, known_elements, max_charge_state):
 
         _lookup={
-            "Al": [(27,26.98,100)], # Isotope name, mass-to-charge (Da), abundance (%)
+            "Al": [(27,26.98,100)], # Isotope name, mass (Da), abundance (%)
             "Cr": [(50,49.95,4.3),(52,51.94,83.8),(53,52.94,9.5),(54,53.94,2.4)],
             "H":  [(1,1.008,99.985),(2,2.014,0.015)]
         }
