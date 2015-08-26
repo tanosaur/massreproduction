@@ -17,6 +17,7 @@ ISOTOPES = [
     Isotope('H', 2, 2.014, 0.015),
 ]
 
+
 class Ion(namedtuple('Ion', 'isotope charge_state')):
     @property
     def mass_to_charge(self):
@@ -86,7 +87,7 @@ class AnalysesTableViewModel(QObject):
 
         self._record = {}
 
-    @pyqtSlot(tuple)
+    @pyqtSlot(dict)
     def on_analyses_updated(self, new_analyses):
         self._record = new_analyses
         self.updated.emit(self._record)
@@ -223,6 +224,19 @@ class SuggestedIonsModel(QObject):
 
         self._suggested_ions = ()
 
+    def suggest(self, known_elements, max_charge_state):
+        known_elements=known_elements.split(',')
+        working_suggested_ions=[]
+
+        for element in known_elements:
+            for isotope in ISOTOPES:
+                if element == isotope.element:
+                    for charge_state in range(1,max_charge_state+1):
+                        working_suggested_ions.append(Ion(isotope, charge_state))
+
+        new_suggested_ions=tuple(working_suggested_ions) 
+        self.replace(self, new_suggested_ions)
+
     def replace(self, new_suggested_ions):
         old_suggested_ions = self._suggested_ions
         self._suggested_ions = new_suggested_ions
@@ -238,6 +252,12 @@ class AnalysesModel(QObject):
         super(AnalysesModel, self).__init__(None)
 
         self._analyses = {}
+        self._ranges = ()
+
+    @pyqtSlot(tuple)
+    def on_ranges_updated(self, new_ranges):
+        self._ranges = new_ranges
+        #TODO dict?
 
     def replace(self, new_analyses):
         old_analyses = self._analyses
@@ -249,15 +269,32 @@ class AnalysesModel(QObject):
 
 class TestModels(unittest.TestCase):
 
-    def CommittedRangesModel_with_committed_ranges(self):
-        committed_ranges_model=CommittedRangesModel()
-        range_a=Range(1,2,3)
-        range_b=Range(1,3,4)
-        ranges=(range_a, range_b)
-        committed_ranges_model.commit(range_a)
-        all_ranges_model=AllRangesModel()
-        all_ranges_model.replace(ranges)
-        self.assertTrue()
+    def test_ions_suggested(self):
+        suggested_ions_model=SuggestedIonsModel()
+        known_elements='Al,H'
+        max_charge_state=2
+        suggested_ions_model.suggest(known_elements, max_charge_state)
+
+        expected_suggestions=(
+        Ion(Isotope('Al', 27, 26.98, 100),1),
+        Ion(Isotope('Al', 27, 26.98, 100),2),
+        Ion(Isotope('H', 1, 1.008, 99.985),1),
+        Ion(Isotope('H', 1, 1.008, 99.985),2),
+        Ion(Isotope('H', 2, 2.014, 0.015),1),
+        Ion(Isotope('H', 2, 2.014, 0.015),2),
+        )
+
+        self.assertTrue(suggested_ions_model._suggested_ions, expected_suggestions)
+
+    # def CommittedRangesModel_with_committed_ranges(self):
+    #     committed_ranges_model=CommittedRangesModel()
+    #     range_a=Range(1,2,3)
+    #     range_b=Range(1,3,4)
+    #     ranges=(range_a, range_b)
+    #     committed_ranges_model.commit(range_a)
+    #     all_ranges_model=AllRangesModel()
+    #     all_ranges_model.replace(ranges)
+    #     self.assertTrue()
 
 
 if __name__ == '__main__':

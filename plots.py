@@ -14,7 +14,7 @@ from matplotlib import rcParams
 
 from itertools import cycle
 
-from models import WorkingPlotRecord
+from models import WorkingPlotRecord, FinalPlotRecord
 
 rcParams['keymap.save'] = u'super+s'
 
@@ -45,6 +45,7 @@ class WorkingFrame(QMainWindow):
 
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
+        print('working plot updated')
 
         self.ax.cla()
 
@@ -62,6 +63,9 @@ class WorkingFrame(QMainWindow):
                 line_color=next(colors)
                 self.ax.axvline(ion.mass_to_charge, color=line_color, picker=0.5)
                 self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
+
+        if record.ranges:
+            pass
 
         self.canvas.draw()
 
@@ -98,15 +102,20 @@ class RangedFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self.ax=self.fig.add_subplot(111)
-        self.ax.hold(False)
-        self.make_plot()
 
-    def make_plot(self,m2cs=[], bins=1000):
-        if not any(m2cs):
-            self.ax.hist(np.arange(1,3), bins, histtype='step')
-            self.ax.cla()
-        else:
-            self.colors=cycle(list('rybmc'))
-            self.ax.hist(m2cs, bins, histtype='step')
-            self.ax.set_yscale('log')
+    @pyqtSlot(FinalPlotRecord)
+    def on_updated(self, record):
+        print('final plot updated')
+
+        self.ax.cla()
+
+        self.lines = 0
+
+        if record.m2c:
+            self.ax.hist(record.m2c, record.bin_size.value, histtype='step')
+
+        if record.ranges:
+            pass
+
+        self.ax.set_yscale('log')
         self.canvas.draw()

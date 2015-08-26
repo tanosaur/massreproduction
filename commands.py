@@ -37,27 +37,27 @@ class BinSizeValueChange(QUndoCommand):
         self._old_value = self._model.replace_value(self._new_value)
 
     def undo(self):
-        self.model.replace_value(self._old_value)
+        self._model.replace_value(self._old_value)
 
 
-class CommandSuggest(QUndoCommand):
+class SuggestChange(QUndoCommand):
 
-    def __init__(self, known_elements, max_charge_state, suggest_model):
-        super(CommandSuggest, self).__init__('Suggest {0} ({1})'.format(known_elements,max_charge_state))
+    def __init__(self, known_elements, max_charge_state, model):
+        super(SuggestChange, self).__init__('Suggest {0} ({1})'.format(known_elements,max_charge_state))
 
-        self.suggest_model=suggest_model
+        self._model=model
 
-        self.known_elements=known_elements # String
-        self.max_charge_state=max_charge_state # Int
+        self._new_known_elements=known_elements
+        self._new_max_charge_state=max_charge_state
 
         self._old_known_elements=None
         self._old_max_charge_state=None
 
     def redo(self):
-        self._old_known_elements, self._old_max_charge_state = self.suggest_model.replace(self.known_elements, self.max_charge_state)
+        self._old_known_elements, self._old_max_charge_state = self.model.replace(self._new_known_elements, self._new_max_charge_state)
 
     def undo(self):
-        self.suggest_model.replace(self._old_known_elements,self._old_max_charge_state)
+        self.model.replace(self._old_known_elements,self._old_max_charge_state)
 
 class CommandAddIonsToTable(QUndoCommand):
     def __init__(self,ion_names, range_table_model):
