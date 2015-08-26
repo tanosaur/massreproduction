@@ -41,7 +41,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot()
     def on_suggestButton_clicked(self):
-        command=SuggestChange(
+        command= commands.SuggestIons(
             str(self.knownelementsLineEdit.text()),
             abs(int(str(self.maxchargestateLineEdit.text()))),
             self._suggested_ions_model
@@ -68,6 +68,9 @@ if __name__ == '__main__':
     loaded_m2c_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
     suggested_ions_model = models.SuggestedIonsModel()
+    all_ranges_model = models.AllRangesModel()
+    committed_ranges_model = models.CommittedRangesModel()
+    analyses_model = models.AnalysesModel()
 
     main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
@@ -75,10 +78,11 @@ if __name__ == '__main__':
 
     working_plot_view_model = models.WorkingPlotViewModel()
     final_plot_view_model = models.FinalPlotViewModel()
+    suggested_ions_view_model = models.SuggestedIonsViewModel()
+    analyses_table_view_model = models.AnalysesTableViewModel()
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
     loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
-
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
     loaded_m2c_model.updated.connect(final_plot_view_model.on_m2c_updated)
 
@@ -86,21 +90,13 @@ if __name__ == '__main__':
     bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
     bin_size_model.updated.connect(final_plot_view_model.on_bin_size_updated)
 
-    all_ranges_model = models.AllRangesModel()
-    committed_ranges_model = models.CommittedRangesModel()
-
     all_ranges_model.updated.connect(working_plot_view_model.on_ranges_updated)
     all_ranges_model.updated.connect(committed_ranges_model.on_ranges_updated)
 
     committed_ranges_model.updated.connect(final_plot_view_model.on_ranges_updated)
 
-    suggested_ions_view_model = SuggestedIonsViewModel()
-
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(suggested_ions_view_model.on_ions_updated)
-
-    analyses_model = AnalysesModel()
-    analyses_table_view_model = AnalysesTableViewModel()
 
     all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
     analyses_model.updated.connect(analyses_table_view_model.on_analyses_updated)

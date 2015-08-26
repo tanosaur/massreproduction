@@ -40,24 +40,24 @@ class BinSizeValueChange(QUndoCommand):
         self._model.replace_value(self._old_value)
 
 
-class SuggestChange(QUndoCommand):
+class SuggestIons(QUndoCommand):
 
     def __init__(self, known_elements, max_charge_state, model):
-        super(SuggestChange, self).__init__('Suggest {0} ({1})'.format(known_elements,max_charge_state))
+        super(SuggestIons, self).__init__('Suggest {0} ({1})'.format(known_elements,max_charge_state))
 
         self._model=model
 
-        self._new_known_elements=known_elements
-        self._new_max_charge_state=max_charge_state
+        self._known_elements=known_elements
+        self._max_charge_state=max_charge_state
 
-        self._old_known_elements=None
-        self._old_max_charge_state=None
+        self._old_suggested_ions=None
 
     def redo(self):
-        self._old_known_elements, self._old_max_charge_state = self.model.replace(self._new_known_elements, self._new_max_charge_state)
+        new_suggested_ions = self._model.suggest(self._known_elements, self._max_charge_state)
+        self._old_suggested_ions = self._model.replace(new_suggested_ions)
 
     def undo(self):
-        self.model.replace(self._old_known_elements,self._old_max_charge_state)
+        self._model.replace(self._old_suggested_ions)
 
 class CommandAddIonsToTable(QUndoCommand):
     def __init__(self,ion_names, range_table_model):

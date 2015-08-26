@@ -234,8 +234,9 @@ class SuggestedIonsModel(QObject):
                     for charge_state in range(1,max_charge_state+1):
                         working_suggested_ions.append(Ion(isotope, charge_state))
 
-        new_suggested_ions=tuple(working_suggested_ions) 
-        self.replace(self, new_suggested_ions)
+        suggested_ions=tuple(working_suggested_ions)
+
+        return suggested_ions
 
     def replace(self, new_suggested_ions):
         old_suggested_ions = self._suggested_ions
@@ -273,8 +274,7 @@ class TestModels(unittest.TestCase):
         suggested_ions_model=SuggestedIonsModel()
         known_elements='Al,H'
         max_charge_state=2
-        suggested_ions_model.suggest(known_elements, max_charge_state)
-
+        suggestions=suggested_ions_model.suggest(known_elements, max_charge_state)
         expected_suggestions=(
         Ion(Isotope('Al', 27, 26.98, 100),1),
         Ion(Isotope('Al', 27, 26.98, 100),2),
@@ -284,7 +284,7 @@ class TestModels(unittest.TestCase):
         Ion(Isotope('H', 2, 2.014, 0.015),2),
         )
 
-        self.assertTrue(suggested_ions_model._suggested_ions, expected_suggestions)
+        self.assertTrue(suggestions, expected_suggestions)
 
     # def CommittedRangesModel_with_committed_ranges(self):
     #     committed_ranges_model=CommittedRangesModel()
