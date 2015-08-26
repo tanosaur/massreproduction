@@ -81,7 +81,6 @@ class SuggestedIonsViewModel(QObject):
         qmodel.setHorizontalHeaderItem(0, QStandardItem('Ion'))
         qmodel.setHorizontalHeaderItem(1, QStandardItem('Abundance (%)'))
 
-        # TODO: Set headers correctly
         root = qmodel.invisibleRootItem()
 
         element_keyfunc = lambda x: x.isotope.element
@@ -94,10 +93,8 @@ class SuggestedIonsViewModel(QObject):
             for ion in ions:
                 ion_name = QStandardItem(ion.name)
                 ion_name.setData(ion)
-                ion_name.setDragEnabled(True)
-                ion_abundance = QStandardItem(ion.isotope.abundance)
+                ion_abundance = QStandardItem(str(ion.isotope.abundance))
                 ion_abundance.setData(ion)
-                ion_abundance.setDragEnabled(True)
                 element_item.appendRow([ion_name, ion_abundance])
 
         self.updated.emit(qmodel)
@@ -276,15 +273,17 @@ class AnalysesModel(QObject):
     def __init__(self):
         super(AnalysesModel, self).__init__(None)
 
-        self._analyses = {}
-        self._ranges = ()
+        self._analyses = {
+        Range(Ion(Isotope('Cr', 52, 51.94, 83.8),1), 50, 55): Trace('FWHM', 'Just coz')
+        }
 
     @pyqtSlot(tuple)
     def on_ranges_updated(self, new_ranges):
-        self._ranges = new_ranges
-        #TODO dict?
+        self.updated.emit(self._analyses)
 
-
+    @pyqtSlot(tuple)
+    def on_ions_added(self, new_ions):
+        self.updated.emit(self._analyses)
 
     def replace(self, new_analyses):
         old_analyses = self._analyses
