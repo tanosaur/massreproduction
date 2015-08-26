@@ -1,4 +1,4 @@
-from PyQt4.QtCore import pyqtSlot
+from PyQt4.QtCore import pyqtSlot, QAbstractItemModel
 from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog
 import sys
 import ui_mainwindow
@@ -48,6 +48,13 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         )
         self.undoStack.push(command)
 
+    @pyqtSlot(QAbstractItemModel)
+    def on_ions_updated(self, model):
+        self.ionlistTree.setModel(model)
+        self.ionlistTree.setSelectionMode(3)
+        self.ionlistTree.expandAll()
+        self.ionlistTree.setSortingEnabled(True)
+
     @pyqtSlot()
     def on_actionUndo_triggered(self):
         self.undoStack.undo()
@@ -81,6 +88,8 @@ if __name__ == '__main__':
     suggested_ions_view_model = models.SuggestedIonsViewModel()
     analyses_table_view_model = models.AnalysesTableViewModel()
 
+    suggested_ions_q_model = models.SuggestedIonsQModel()
+
     working_plot_view_model.updated.connect(working_frame.on_updated)
     loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
@@ -97,6 +106,8 @@ if __name__ == '__main__':
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(suggested_ions_view_model.on_ions_updated)
+    suggested_ions_view_model.updated.connect(suggested_ions_q_model.on_ions_updated)
+    suggested_ions_q_model.updated.connect(mainwindow.on_ions_updated)
 
     all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
     analyses_model.updated.connect(analyses_table_view_model.on_analyses_updated)

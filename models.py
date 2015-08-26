@@ -1,6 +1,6 @@
 from collections import namedtuple
 import unittest
-from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot, QAbstractItemModel
 
 ELEMENTS = (
     'Al', 'H'
@@ -72,12 +72,27 @@ class SuggestedIonsViewModel(QObject):
     def __init__(self):
         super(SuggestedIonsViewModel, self).__init__(None)
 
-        self._record = ()
+        self._record = () # Not used for anything?
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
         self._record = new_ions
         self.updated.emit(self._record)
+
+class SuggestedIonsQModel(QAbstractItemModel):
+    updated = pyqtSignal(QAbstractItemModel)
+    def __init__(self):
+        super(SuggestedIonsQModel, self).__init__(None)
+
+        self._record = ()
+
+    @pyqtSlot(tuple)
+    def on_ions_updated(self, new_ions):
+        self._record = new_ions
+        self.create_qmodel(self._record)
+
+    def create_qmodel(self, ions):
+        pass
 
 class AnalysesTableViewModel(QObject):
     updated = pyqtSignal(dict) # Range: Trace
