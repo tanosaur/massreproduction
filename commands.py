@@ -59,10 +59,9 @@ class SuggestIons(QUndoCommand):
     def undo(self):
         self._model.replace(self._old_suggested_ions)
 
-class CommandAddIonsToTable(QUndoCommand):
-    def __init__(self,ion_names, range_table_model):
-
-        super(CommandAddIonsToTable, self).__init__('Add {0}'.format(','.join(ion_names)))
+class AddIonsToTable(QUndoCommand):
+    def __init__(self, qmodel_indices):
+        super(AddIonsToTable, self).__init__('Add {0}'.format(','.join(qmodel_indices)))
 
         self.range_table_model=range_table_model
 
@@ -74,6 +73,3 @@ class CommandAddIonsToTable(QUndoCommand):
 
     def undo(self):
         self.range_table_model.update_ions(self.old_ion_names)
-
-class CommandRemoveIonsFromTree(QUndoCommand):
-    pass

@@ -41,7 +41,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot()
     def on_suggestButton_clicked(self):
-        command= commands.SuggestIons(
+        command = commands.SuggestIons(
             str(self.knownelementsLineEdit.text()),
             abs(int(str(self.maxchargestateLineEdit.text()))),
             self._suggested_ions_model
@@ -54,6 +54,12 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.ionlistTree.setSelectionMode(3)
         self.ionlistTree.expandAll()
         self.ionlistTree.setSortingEnabled(True)
+
+    @pyqtSlot()
+    def on_addionsButton_clicked(self):
+        qmodel_indices=self.ionlistTree.selectedIndexes()
+        command = commands.AddIonsToTable(qmodel_indices)
+        self.undoStack.push(command)
 
     @pyqtSlot()
     def on_actionUndo_triggered(self):
@@ -88,8 +94,6 @@ if __name__ == '__main__':
     suggested_ions_view_model = models.SuggestedIonsViewModel()
     analyses_table_view_model = models.AnalysesTableViewModel()
 
-    suggested_ions_q_model = models.SuggestedIonsQModel()
-
     working_plot_view_model.updated.connect(working_frame.on_updated)
     loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
@@ -106,8 +110,7 @@ if __name__ == '__main__':
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(suggested_ions_view_model.on_ions_updated)
-    suggested_ions_view_model.updated.connect(suggested_ions_q_model.on_ions_updated)
-    suggested_ions_q_model.updated.connect(mainwindow.on_ions_updated)
+    suggested_ions_view_model.updated.connect(main_window.on_ions_updated) # view model updated?
 
     all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
     analyses_model.updated.connect(analyses_table_view_model.on_analyses_updated)

@@ -1,6 +1,8 @@
 from collections import namedtuple
 import unittest
-from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot, QAbstractItemModel
+from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+from PyQt4.QtGui import QStandardItemModel, QStandardItem
+import itertools
 
 ELEMENTS = (
     'Al', 'H'
@@ -25,7 +27,7 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
 
     @property
     def name(self):
-        return "%s%s+%s".format(self.isotope.number, self.isotope.element, self.charge_state)
+        return "%s%s+%s" % (self.isotope.number, self.isotope.element, self.charge_state)
 
 Range = namedtuple('Range', 'ion start end')
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2c bin_size ranges ions')
@@ -67,32 +69,39 @@ class WorkingPlotViewModel(QObject):
         self.updated.emit(self._record)
 
 class SuggestedIonsViewModel(QObject):
-    updated = pyqtSignal(tuple) # (Ion, ...)
+    updated = pyqtSignal(QStandardItemModel) # (Ion, ...)
 
     def __init__(self):
         super(SuggestedIonsViewModel, self).__init__(None)
 
-        self._record = () # Not used for anything?
-
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
-        self._record = new_ions
-        self.updated.emit(self._record)
+        qmodel = QStandardItemModel()
+        qmodel.setColumnCount(2)
+        qmodel.setHorizontalHeaderItem(0, QStandardItem('Ion'))
+        qmodel.setHorizontalHeaderItem(1, QStandardItem('Abundance (%)'))
 
-class SuggestedIonsQModel(QAbstractItemModel):
-    updated = pyqtSignal(QAbstractItemModel)
-    def __init__(self):
-        super(SuggestedIonsQModel, self).__init__(None)
+        # TODO: Set headers correctly
+        root = qmodel.invisibleRootItem()
 
-        self._record = ()
+        element_keyfunc = lambda x: x.isotope.element
+        sorted_ions = sorted(new_ions, key=element_keyfunc)
 
-    @pyqtSlot(tuple)
-    def on_ions_updated(self, new_ions):
-        self._record = new_ions
-        self.create_qmodel(self._record)
+        for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
+            element_item = QStandardItem(element)
+            root.appendRow(element_item)
 
-    def create_qmodel(self, ions):
-        pass
+            for ion in ions:
+                ion_name = QStandardItem(ion.name)
+                ion_name.setData(ion)
+                ion_name.setDragEnabled(True)
+                ion_abundance = QStandardItem(ion.isotope.abundance)
+                ion_abundance.setData(ion)
+                ion_abundance.setDragEnabled(True)
+                element_item.appendRow([ion_name, ion_abundance])
+
+        self.updated.emit(qmodel)
+
 
 class AnalysesTableViewModel(QObject):
     updated = pyqtSignal(dict) # Range: Trace
@@ -274,6 +283,8 @@ class AnalysesModel(QObject):
     def on_ranges_updated(self, new_ranges):
         self._ranges = new_ranges
         #TODO dict?
+
+
 
     def replace(self, new_analyses):
         old_analyses = self._analyses
