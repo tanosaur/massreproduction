@@ -1,7 +1,6 @@
 from collections import namedtuple
 import unittest
-import pickle
-# import simplejson as json
+import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt4.QtGui import QStandardItemModel, QStandardItem
 
@@ -66,19 +65,6 @@ class WorkingPlotViewModel(QObject):
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
         self._record = self._record._replace(ions=new_ions)
-        self.updated.emit(self._record)
-
-class AnalysesTableViewModel(QObject):
-    updated = pyqtSignal(dict) # Range: Trace
-
-    def __init__(self):
-        super(AnalysesTableViewModel, self).__init__(None)
-
-        self._record = {}
-
-    @pyqtSlot(dict)
-    def on_analyses_updated(self, new_analyses):
-        self._record = new_analyses
         self.updated.emit(self._record)
 
 class FinalPlotViewModel(QObject):
@@ -189,13 +175,6 @@ class AllRangesModel(QObject):
 
         self._ranges = ()
 
-    def add_ions(self, new_ions):
-        new_ranges = list(self._ranges)
-        for ion in new_ions:
-            ranges.append(Range(ion=ion, start=None, end=None))
-
-        return tuple(new_ranges)
-
     def replace(self, new_ranges):
         old_ranges = self._ranges
         self._ranges = new_ranges
@@ -253,30 +232,29 @@ class AnalysesModel(QObject):
         Range(Ion(Isotope('Cr', 52, 51.94, 83.8),1), 50, 55): Trace('FWHM', 'Just coz')
         }
 
-    @pyqtSlot(tuple)
-    def on_ranges_updated(self, new_ranges):
-        old_analyses = self._analyses
-        for _range in new_ranges:
-            if not self._analyses.has_key(_range)
-                self._analyses.update({_range: Trace(method=None, reason=None)})
 
-                # ISSUE HERE is delete?
-
-    def replace(self, new_analyses):
+    def add_analyses(self, new_ions):
         old_analyses = self._analyses
-        self._analyses = new_analyses
+        for ion in new_ions:
+            print(ion)
+            new_range = Range(ion=ion, start=None, end=None)
+            if not self._analyses.has_key(new_range): #TODO test if this passes with different start,end too
+                self._analyses.update({new_range: Trace(method=None, reason=None)})
 
         self.updated.emit(self._analyses)
-        print(self._analyses)
-
         return old_analyses
 
-    def export_analyses(self):
-        with open('analyses.mr', 'wb') as f:
-            pickle.dump(self._analyses, f)
+    @pyqtSlot(tuple)
+    def on_ranges_updated(self, new_ranges):
+        self.updated.emit(self._analyses)
 
-        # with open('json.mr', mode='w', encoding='utf-8') as f:
-        #     json.dumps(self._analyses, f, indent=2)
+    def replace(self, new_analyses):
+        self._analyses = new_analyses
+        self.updated.emit(self._analyses)
+
+    def export_analyses(self):
+        with open('json.mr', mode='w', encoding='utf-8') as f:
+            json.dumps(self._analyses, f, indent=2)
 
 
 class TestModels(unittest.TestCase):

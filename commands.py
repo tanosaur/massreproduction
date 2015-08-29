@@ -1,7 +1,6 @@
 import unittest
 import numpy as np
-import pickle
-# import simplejson as json
+import json
 import aptread.aptload
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
@@ -63,19 +62,18 @@ class SuggestIons(QUndoCommand):
 
 class AddIonsToTable(QUndoCommand):
     def __init__(self, added_ions, model):
-        super(AddIonsToTable, self).__init__('Add {0}'.format(','.join(ion.name for ion in added_ions)))
-
+        super(AddIonsToTable, self).__init__('Add {0}'.format(','.join('ion.name for ion in added_ions')))
+        print(ion.name for ion in added_ions)
         self._model=model
 
         self._added_ions=added_ions
-        self._old_ranges=None
+        self._old_analyses=None
 
     def redo(self):
-        new_ranges = self._model.add_ions(self._added_ions)
-        self._old_ranges = self._model.replace(new_ranges)
+        self._old_analyses = self._model.add_analyses(self._added_ions)
 
     def undo(self):
-        self._model.replace(self._old_ranges)
+        self._model.replace(self._old_analyses)
 
 class ExportAnalyses(QUndoCommand):
     def __init__(self, model):
@@ -103,10 +101,7 @@ class LoadAnalyses(QUndoCommand):
         self._model.replace(self._old_analyses)
 
     def _read_mrfile(self, mrfile):
-        with open(mrfile, 'rb') as f:
-            saved_analyses = pickle.load(f)
-
-        # with open(mrfile, 'r', encoding='utf-8') as f:
-        #     saved_analyses = json.loads(f)
+        with open(mrfile, 'r', encoding='utf-8') as f:
+            saved_analyses = json.loads(f)
 
         return saved_analyses

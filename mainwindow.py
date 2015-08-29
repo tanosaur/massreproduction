@@ -10,14 +10,13 @@ import itertools
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, loaded_m2c_model, bin_size_model, suggested_ions_model, all_ranges_model, analyses_model, parent=None):
+    def __init__(self, loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
         self._loaded_m2c_model = loaded_m2c_model
         self._bin_size_model = bin_size_model
         self._suggested_ions_model = suggested_ions_model
-        self._all_ranges_model = all_ranges_model
         self._analyses_model = analyses_model
 
         self.undoStack = QUndoStack(self)
@@ -55,7 +54,6 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
-
         qmodel = QStandardItemModel()
         qmodel.setColumnCount(2)
         qmodel.setHorizontalHeaderItem(0, QStandardItem('Ion'))
@@ -88,11 +86,35 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     def on_addionsButton_clicked(self):
         qmodel_indices=self.ionlistTree.selectedIndexes()
         ions=[self.suggestmodel.data(index,32) for index in qmodel_indices]
-        command = commands.AddIonsToTable(ions, self._all_ranges_model)
+        print(ions)
+        command = commands.AddIonsToTable(ions, self._analyses_model)
         self.undoStack.push(command)
 
-    @pyqtSlot()
-    def on_analyses_updated(self):
+    @pyqtSlot(dict)
+    def on_analyses_updated(self, analyses):
+        qmodel = QStandardItemModel()
+        qmodel.setColumnCount(5)
+        qmodel.setHorizontalHeaderItem(0, QStandardItem('Ion'))
+        qmodel.setHorizontalHeaderItem(1, QStandardItem('Method'))
+        qmodel.setHorizontalHeaderItem(2, QStandardItem('Start'))
+        qmodel.setHorizontalHeaderItem(3, QStandardItem('End'))
+        qmodel.setHorizontalHeaderItem(4, QStandardItem('Reason'))
+
+        root = qmodel.invisibleRootItem()
+
+        for _range, trace in analyses.items():
+            print(_range, trace)
+            ion_name = QStandardItem(_range.ion.name)
+            method = QStandardItem(trace.method)
+            start = QStandardItem(_range.start)
+            end = QStandardItem(_range.end)
+            reason = QStandardItem(trace.reason)
+
+            root.appendRow([ion_name, method, start, end, reason])
+
+        self.rangedTable.setModel(qmodel)
+        self.rangedTable.setSelectionMode(3)
+        self.rangedTable.setSortingEnabled(True)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
@@ -129,13 +151,12 @@ if __name__ == '__main__':
     committed_ranges_model = models.CommittedRangesModel()
     analyses_model = models.AnalysesModel()
 
-    main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model, all_ranges_model, analyses_model)
+    main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
     working_plot_view_model = models.WorkingPlotViewModel()
     final_plot_view_model = models.FinalPlotViewModel()
-    analyses_table_view_model = models.AnalysesTableViewModel()
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
@@ -155,7 +176,7 @@ if __name__ == '__main__':
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(main_window.on_ions_updated)
 
-    analyses_model.updated.connect(analyses_table_view_model.on_analyses_updated)
+    analyses_model.updated.connect(main_window.on_analyses_updated)
 
     loaded_m2c_model.prime()
     bin_size_model.prime()
