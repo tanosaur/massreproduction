@@ -1,8 +1,9 @@
 from collections import namedtuple
 import unittest
+import pickle
+# import simplejson as json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 from PyQt4.QtGui import QStandardItemModel, QStandardItem
-import itertools
 
 ELEMENTS = (
     'Al', 'H'
@@ -19,7 +20,6 @@ ISOTOPES = [
     Isotope('H', 2, 2.014, 0.015),
 ]
 
-
 class Ion(namedtuple('Ion', 'isotope charge_state')):
     @property
     def mass_to_charge(self):
@@ -27,7 +27,7 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
 
     @property
     def name(self):
-        return "%s%s+%s" % (self.isotope.number, self.isotope.element, self.charge_state)
+        return '%s%s+%s' % (self.isotope.number, self.isotope.element, self.charge_state)
 
 Range = namedtuple('Range', 'ion start end')
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2c bin_size ranges ions')
@@ -67,38 +67,6 @@ class WorkingPlotViewModel(QObject):
     def on_ions_updated(self, new_ions):
         self._record = self._record._replace(ions=new_ions)
         self.updated.emit(self._record)
-
-class SuggestedIonsViewModel(QObject):
-    updated = pyqtSignal(QStandardItemModel) # (Ion, ...)
-
-    def __init__(self):
-        super(SuggestedIonsViewModel, self).__init__(None)
-
-    @pyqtSlot(tuple)
-    def on_ions_updated(self, new_ions):
-        qmodel = QStandardItemModel()
-        qmodel.setColumnCount(2)
-        qmodel.setHorizontalHeaderItem(0, QStandardItem('Ion'))
-        qmodel.setHorizontalHeaderItem(1, QStandardItem('Abundance (%)'))
-
-        root = qmodel.invisibleRootItem()
-
-        element_keyfunc = lambda x: x.isotope.element
-        sorted_ions = sorted(new_ions, key=element_keyfunc)
-
-        for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
-            element_item = QStandardItem(element)
-            root.appendRow(element_item)
-
-            for ion in ions:
-                ion_name = QStandardItem(ion.name)
-                ion_name.setData(ion)
-                ion_abundance = QStandardItem(str(ion.isotope.abundance))
-                ion_abundance.setData(ion)
-                element_item.appendRow([ion_name, ion_abundance])
-
-        self.updated.emit(qmodel)
-
 
 class AnalysesTableViewModel(QObject):
     updated = pyqtSignal(dict) # Range: Trace
@@ -189,6 +157,9 @@ class AllRangesModel(QObject):
         super(AllRangesModel, self).__init__(None)
 
         self._allranges = ()
+
+    def updated_ions(self, new_ions):
+        old_ions =
 
     def replace(self, new_allranges):
         old_allranges = self._allranges
@@ -281,17 +252,22 @@ class AnalysesModel(QObject):
     def on_ranges_updated(self, new_ranges):
         self.updated.emit(self._analyses)
 
-    @pyqtSlot(tuple)
-    def on_ions_added(self, new_ions):
-        self.updated.emit(self._analyses)
-
     def replace(self, new_analyses):
         old_analyses = self._analyses
         self._analyses = new_analyses
 
         self.updated.emit(self._analyses)
+        print(self._analyses)
 
         return old_analyses
+
+    def export_analyses(self):
+        with open('analyses.mr', 'wb') as f:
+            pickle.dump(self._analyses, f)
+
+        # with open('json.mr', mode='w', encoding='utf-8') as f:
+        #     json.dumps(self._analyses, f, indent=2)
+
 
 class TestModels(unittest.TestCase):
 
@@ -320,7 +296,6 @@ class TestModels(unittest.TestCase):
     #     all_ranges_model=AllRangesModel()
     #     all_ranges_model.replace(ranges)
     #     self.assertTrue()
-
 
 if __name__ == '__main__':
     unittest.main()

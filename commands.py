@@ -1,5 +1,7 @@
 import unittest
 import numpy as np
+import pickle
+# import simplejson as json
 import aptread.aptload
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
@@ -60,16 +62,50 @@ class SuggestIons(QUndoCommand):
         self._model.replace(self._old_suggested_ions)
 
 class AddIonsToTable(QUndoCommand):
-    def __init__(self, qmodel_indices):
-        super(AddIonsToTable, self).__init__('Add {0}'.format(','.join(qmodel_indices)))
+    def __init__(self, added_ions, model):
+        super(AddIonsToTable, self).__init__('Add {0}'.format(','.join(ion.name for ion in added_ions)))
 
-        self.range_table_model=range_table_model
+        self._model=model
 
-        self.ion_names=ion_names
-        self.old_ion_names=None
+        self._ions=added_ions
+        self._old_ions=None
 
     def redo(self):
-        self._old_ions_names = self.range_table_model.update_ions(self.ion_names)
+        self._old_ions = self._model.update_ions(self._ions)
 
     def undo(self):
-        self.range_table_model.update_ions(self.old_ion_names)
+        self._model.update_ions(self._old_ions)
+
+class ExportAnalyses(QUndoCommand):
+    def __init__(self, model):
+        super(ExportAnalyses, self).__init__('Export analyses')
+
+        self._model=model
+
+    def redo(self):
+        self._model.export_analyses()
+
+class LoadAnalyses(QUndoCommand):
+    def __init__(self, filename, model):
+        super(LoadAnalyses, self).__init__('Load (%s)' %filename)
+
+        self._filename=filename
+        self._model=model
+
+        self._old_analyses=None
+
+    def redo(self):
+        new_analyses = self._read_mrfile(self._filename)
+        self._old_analyses = self._model.replace(new_analyses)
+
+    def undo(self):
+        self._model.replace(self._old_analyses)
+
+    def _read_mrfile(self, mrfile):
+        with open(mrfile, 'rb') as f:
+            saved_analyses = pickle.load(f)
+
+        # with open(mrfile, 'r', encoding='utf-8') as f:
+        #     saved_analyses = json.loads(f)
+
+        return saved_analyses

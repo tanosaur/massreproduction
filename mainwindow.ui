@@ -506,8 +506,25 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <widget class="QMenu" name="menuLoad">
+     <property name="title">
+      <string>Load...</string>
+     </property>
+     <addaction name="action_LoadRNG"/>
+     <addaction name="action_LoadMR"/>
+    </widget>
+    <widget class="QMenu" name="menuExport_as">
+     <property name="title">
+      <string>Export as...</string>
+     </property>
+     <addaction name="action_ExportAsRNG"/>
+     <addaction name="action_ExportAsMR"/>
+    </widget>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
+    <addaction name="separator"/>
+    <addaction name="menuLoad"/>
+    <addaction name="menuExport_as"/>
    </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
@@ -551,7 +568,7 @@
      <normaloff>../../../../.designer/backup/document_add.png</normaloff>../../../../.designer/backup/document_add.png</iconset>
    </property>
    <property name="text">
-    <string>Load...</string>
+    <string>Load data...</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+L</string>
@@ -591,6 +608,46 @@
   <action name="actionHistory">
    <property name="text">
     <string>History</string>
+   </property>
+  </action>
+  <action name="actionAs_rng">
+   <property name="text">
+    <string>as .rng</string>
+   </property>
+  </action>
+  <action name="actionAs_mr">
+   <property name="text">
+    <string>as .mr</string>
+   </property>
+  </action>
+  <action name="actionLoad_rng">
+   <property name="text">
+    <string>Load .rng</string>
+   </property>
+  </action>
+  <action name="actionLoad_mr">
+   <property name="text">
+    <string>Load .mr</string>
+   </property>
+  </action>
+  <action name="action_LoadRNG">
+   <property name="text">
+    <string>.rng</string>
+   </property>
+  </action>
+  <action name="action_LoadMR">
+   <property name="text">
+    <string>.mr</string>
+   </property>
+  </action>
+  <action name="action_ExportAsRNG">
+   <property name="text">
+    <string>.rng</string>
+   </property>
+  </action>
+  <action name="action_ExportAsMR">
+   <property name="text">
+    <string>.mr</string>
    </property>
   </action>
  </widget>
