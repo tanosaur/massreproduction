@@ -67,14 +67,15 @@ class AddIonsToTable(QUndoCommand):
 
         self._model=model
 
-        self._ions=added_ions
-        self._old_ions=None
+        self._added_ions=added_ions
+        self._old_ranges=None
 
     def redo(self):
-        self._old_ions = self._model.update_ions(self._ions)
+        new_ranges = self._model.add_ions(self._added_ions)
+        self._old_ranges = self._model.replace(new_ranges)
 
     def undo(self):
-        self._model.update_ions(self._old_ions)
+        self._model.replace(self._old_ranges)
 
 class ExportAnalyses(QUndoCommand):
     def __init__(self, model):

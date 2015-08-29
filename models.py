@@ -150,24 +150,59 @@ class BinSizeModel(QObject):
     def prime(self):
         self.updated.emit(self._record)
 
+
+class SuggestedIonsModel(QObject):
+    updated = pyqtSignal(tuple)
+
+    def __init__(self):
+        super(SuggestedIonsModel, self).__init__(None)
+
+        self._suggested_ions = ()
+
+    def suggest(self, known_elements, max_charge_state):
+        known_elements=known_elements.split(',')
+        working_suggested_ions=[]
+
+        for element in known_elements:
+            for isotope in ISOTOPES:
+                if element == isotope.element:
+                    for charge_state in range(1,max_charge_state+1):
+                        working_suggested_ions.append(Ion(isotope, charge_state))
+
+        suggested_ions=tuple(working_suggested_ions)
+
+        return suggested_ions
+
+    def replace(self, new_suggested_ions):
+        old_suggested_ions = self._suggested_ions
+        self._suggested_ions = new_suggested_ions
+
+        self.updated.emit(self._suggested_ions)
+
+        return old_suggested_ions
+
 class AllRangesModel(QObject):
     updated = pyqtSignal(tuple)
 
     def __init__(self):
         super(AllRangesModel, self).__init__(None)
 
-        self._allranges = ()
+        self._ranges = ()
 
-    def updated_ions(self, new_ions):
-        old_ions =
+    def add_ions(self, new_ions):
+        new_ranges = list(self._ranges)
+        for ion in new_ions:
+            ranges.append(Range(ion=ion, start=None, end=None))
 
-    def replace(self, new_allranges):
-        old_allranges = self._allranges
-        self._allranges = new_allranges
+        return tuple(new_ranges)
 
-        self.updated.emit(self._allranges)
+    def replace(self, new_ranges):
+        old_ranges = self._ranges
+        self._ranges = new_ranges
 
-        return old_allranges
+        self.updated.emit(self._ranges)
+
+        return old_ranges
 
 class CommittedRangesModel(QObject):
     updated = pyqtSignal(tuple)
@@ -208,36 +243,6 @@ class CommittedRangesModel(QObject):
 # # NOW emit will emit updated, with (range_c)
 
 
-class SuggestedIonsModel(QObject):
-    updated = pyqtSignal(tuple)
-
-    def __init__(self):
-        super(SuggestedIonsModel, self).__init__(None)
-
-        self._suggested_ions = ()
-
-    def suggest(self, known_elements, max_charge_state):
-        known_elements=known_elements.split(',')
-        working_suggested_ions=[]
-
-        for element in known_elements:
-            for isotope in ISOTOPES:
-                if element == isotope.element:
-                    for charge_state in range(1,max_charge_state+1):
-                        working_suggested_ions.append(Ion(isotope, charge_state))
-
-        suggested_ions=tuple(working_suggested_ions)
-
-        return suggested_ions
-
-    def replace(self, new_suggested_ions):
-        old_suggested_ions = self._suggested_ions
-        self._suggested_ions = new_suggested_ions
-
-        self.updated.emit(self._suggested_ions)
-
-        return old_suggested_ions
-
 class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
 
@@ -250,7 +255,12 @@ class AnalysesModel(QObject):
 
     @pyqtSlot(tuple)
     def on_ranges_updated(self, new_ranges):
-        self.updated.emit(self._analyses)
+        old_analyses = self._analyses
+        for _range in new_ranges:
+            if not self._analyses.has_key(_range)
+                self._analyses.update({_range: Trace(method=None, reason=None)})
+
+                # ISSUE HERE is delete?
 
     def replace(self, new_analyses):
         old_analyses = self._analyses

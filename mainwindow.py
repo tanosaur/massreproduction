@@ -92,6 +92,9 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.undoStack.push(command)
 
     @pyqtSlot()
+    def on_analyses_updated(self):
+
+    @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
         command = commands.ExportAnalyses(self._analyses_model)
         self.undoStack.push(command)
@@ -135,8 +138,8 @@ if __name__ == '__main__':
     analyses_table_view_model = models.AnalysesTableViewModel()
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
-    loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
+    loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
     loaded_m2c_model.updated.connect(final_plot_view_model.on_m2c_updated)
 
     bin_size_model.updated.connect(main_window.on_bin_size_updated)
@@ -145,13 +148,13 @@ if __name__ == '__main__':
 
     all_ranges_model.updated.connect(working_plot_view_model.on_ranges_updated)
     all_ranges_model.updated.connect(committed_ranges_model.on_ranges_updated)
+    all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
 
     committed_ranges_model.updated.connect(final_plot_view_model.on_ranges_updated)
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(main_window.on_ions_updated)
 
-    all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
     analyses_model.updated.connect(analyses_table_view_model.on_analyses_updated)
 
     loaded_m2c_model.prime()
