@@ -2,13 +2,9 @@ from collections import namedtuple
 import unittest
 import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
-from PyQt4.QtGui import QStandardItemModel, QStandardItem
-
-ELEMENTS = (
-    'Al', 'H'
-)
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
+
 ISOTOPES = [
     Isotope('Al', 27, 26.98, 100),
     Isotope('Cr', 50, 49.95, 4.3),
@@ -28,71 +24,10 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
     def name(self):
         return '%s%s+%s' % (self.isotope.number, self.isotope.element, self.charge_state)
 
-Range = namedtuple('Range', 'ion start end')
-WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2c bin_size ranges ions')
+Range = namedtuple('Range', 'start end')
+Method = namedtuple('Method', 'name function')
+Analysis = namedtuple('Analysis', 'method range reason')
 BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
-Trace = namedtuple('Trace', 'method reason')
-FinalPlotRecord = namedtuple('FinalPlotRecord', 'm2c bin_size ranges')
-
-class WorkingPlotViewModel(QObject):
-    updated = pyqtSignal(WorkingPlotRecord)
-
-    def __init__(self):
-        super(WorkingPlotViewModel, self).__init__(None)
-
-        self._record = WorkingPlotRecord(
-            m2c=(),
-            bin_size=BinSizeRecord(1, 0, 1),
-            ranges=(),
-            ions=()
-        )
-
-    @pyqtSlot(tuple)
-    def on_m2c_updated(self, new_m2c):
-        self._record = self._record._replace(m2c=new_m2c)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(BinSizeRecord)
-    def on_bin_size_updated(self, new_bin_size):
-        self._record = self._record._replace(bin_size=new_bin_size)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(tuple)
-    def on_ranges_updated(self, new_ranges):
-        self._record = self._record._replace(ranges=new_ranges)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(tuple)
-    def on_ions_updated(self, new_ions):
-        self._record = self._record._replace(ions=new_ions)
-        self.updated.emit(self._record)
-
-class FinalPlotViewModel(QObject):
-    updated = pyqtSignal(FinalPlotRecord)
-
-    def __init__(self):
-        super(FinalPlotViewModel, self).__init__(None)
-
-        self._record = FinalPlotRecord(
-            m2c=(),
-            bin_size=BinSizeRecord(1, 0, 1),
-            ranges=(),
-        )
-
-    @pyqtSlot(tuple)
-    def on_m2c_updated(self, new_m2c):
-        self._record = self._record._replace(m2c=new_m2c)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(BinSizeRecord)
-    def on_bin_size_updated(self, new_bin_size):
-        self._record = self._record._replace(bin_size=new_bin_size)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(tuple)
-    def on_ranges_updated(self, new_ranges):
-        self._record = self._record._replace(ranges=new_ranges)
-        self.updated.emit(self._record)
 
 class LoadedM2CModel(QObject):
     updated = pyqtSignal(tuple)
@@ -221,6 +156,26 @@ class CommittedRangesModel(QObject):
 #
 # # NOW emit will emit updated, with (range_c)
 
+class MethodsModel(QObject):
+    updated = pyqtSignal(tuple)
+
+    def __init__(self):
+        super(MethodsModel, self).__init__(None)
+
+        self._methods = ()
+
+    def replace(self, new_methods):
+        old_methods = self._methods
+        self._methods = new_methods
+        self.updated.emit(self._methods)
+
+        return old_methods
+
+    def prime(self):
+        # TODO iterate through folder and get filename, save as method name
+        # in that file, save function with same name as method function
+        methods=('Manual', 'FWHM')
+        self.replace(methods)
 
 class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
@@ -228,28 +183,24 @@ class AnalysesModel(QObject):
     def __init__(self):
         super(AnalysesModel, self).__init__(None)
 
-        self._analyses = {
-        Range(Ion(Isotope('Cr', 52, 51.94, 83.8),1), 50, 55): Trace('FWHM', 'Just coz')
-        }
-
+        self._analyses = {}
 
     def add_analyses(self, new_ions):
         old_analyses = self._analyses
-        for ion in new_ions:
-            print(ion)
-            new_range = Range(ion=ion, start=None, end=None)
-            if not self._analyses.has_key(new_range): #TODO test if this passes with different start,end too
-                self._analyses.update({new_range: Trace(method=None, reason=None)})
 
+        new_analyses = {}
+        new_analyses.update(old_analyses)
+        for ion in new_ions:
+            range = Range(start=ion.mass_to_charge, end=ion.mass_to_charge)
+            new_analyses[ion] = Analysis(method='Manual', range=range, reason=None)
+
+        self._analyses = new_analyses
         self.updated.emit(self._analyses)
+
         return old_analyses
 
     @pyqtSlot(tuple)
     def on_ranges_updated(self, new_ranges):
-        self.updated.emit(self._analyses)
-
-    def replace(self, new_analyses):
-        self._analyses = new_analyses
         self.updated.emit(self._analyses)
 
     def export_analyses(self):

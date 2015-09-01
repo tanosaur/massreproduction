@@ -19,7 +19,6 @@ Ion = {
 ## Reified types
 
 Range = {
-	ion: Ion
 	start: float (ex: 25.5)
 	end: float (ex: 26.5)
 }
@@ -41,18 +40,21 @@ binsize = int
 suggestions = [Ion, …]
 
 ### To display ranges
-ranges = [Range, …]
+ranges = {
+	Ion: Range
+}
 
 ## Suggested Ion List
 ions = [Ion, …]
 
 ## Analyses Table
-analyses = {
-	Range: {
+analyses = [
+	Ion: {
 		method: string (ex: ‘FWHM’, ‘Manual’)
+		range: Range
 		reason: string
 	}
-}
+]
 
 ## Final Plot
 ### To display mass to charge information
@@ -60,7 +62,9 @@ m2c = [float, …]
 binsize = int
 
 ### To display ranges
-ranges = [Range, …]
+ranges = {
+	Ion: Range
+}
 
 ## Undo Stack
 commands = [Command, …]

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1263</width>
+    <width>1265</width>
     <height>831</height>
    </rect>
   </property>
@@ -14,7 +14,7 @@
    <string>MainWindow</string>
   </property>
   <widget class="QWidget" name="centralwidget">
-   <layout class="QHBoxLayout" name="horizontalLayout_4">
+   <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <layout class="QVBoxLayout" name="verticalLayout_4">
       <item>
@@ -248,64 +248,66 @@
      </layout>
     </item>
     <item>
-     <layout class="QVBoxLayout" name="rightpanelLayout">
+     <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout">
+       <widget class="QTableView" name="rangedTable">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>335</height>
+         </size>
+        </property>
+        <property name="frameShadow">
+         <enum>QFrame::Sunken</enum>
+        </property>
+        <property name="dragDropMode">
+         <enum>QAbstractItemView::DropOnly</enum>
+        </property>
+        <property name="selectionBehavior">
+         <enum>QAbstractItemView::SelectRows</enum>
+        </property>
+        <property name="gridStyle">
+         <enum>Qt::SolidLine</enum>
+        </property>
+        <property name="sortingEnabled">
+         <bool>true</bool>
+        </property>
+        <attribute name="horizontalHeaderDefaultSectionSize">
+         <number>65</number>
+        </attribute>
+        <attribute name="horizontalHeaderMinimumSectionSize">
+         <number>20</number>
+        </attribute>
+        <attribute name="horizontalHeaderStretchLastSection">
+         <bool>true</bool>
+        </attribute>
+        <attribute name="verticalHeaderStretchLastSection">
+         <bool>false</bool>
+        </attribute>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_6">
         <item>
-         <layout class="QVBoxLayout" name="verticalLayout">
-          <item>
-           <widget class="QPushButton" name="applyButton">
-            <property name="text">
-             <string>Apply</string>
-            </property>
-            <property name="shortcut">
-             <string>Ctrl+A</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="zoomtoButton">
-            <property name="text">
-             <string>Zoom To</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="onButton">
-            <property name="text">
-             <string>On</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="deleteButton">
-            <property name="text">
-             <string>Delete</string>
-            </property>
-           </widget>
-          </item>
-          <item>
-           <widget class="QPushButton" name="removeButton">
-            <property name="text">
-             <string>Remove</string>
-            </property>
-           </widget>
-          </item>
-         </layout>
+         <widget class="QPushButton" name="commitButton">
+          <property name="text">
+           <string>Commit</string>
+          </property>
+         </widget>
         </item>
         <item>
-         <widget class="QTableView" name="rangedTable">
-          <property name="sizePolicy">
-           <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
-            <horstretch>0</horstretch>
-            <verstretch>0</verstretch>
-           </sizepolicy>
+         <widget class="QPushButton" name="deleteButton">
+          <property name="text">
+           <string>Delete</string>
           </property>
-          <property name="minimumSize">
-           <size>
-            <width>0</width>
-            <height>200</height>
-           </size>
+          <property name="shortcut">
+           <string>Ctrl+A</string>
           </property>
          </widget>
         </item>
@@ -328,8 +330,39 @@
          </attribute>
          <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
+           <widget class="QTreeView" name="ionlistTree">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="minimumSize">
+             <size>
+              <width>50</width>
+              <height>100</height>
+             </size>
+            </property>
+            <property name="dragEnabled">
+             <bool>true</bool>
+            </property>
+            <property name="dragDropMode">
+             <enum>QAbstractItemView::DragOnly</enum>
+            </property>
+            <property name="selectionMode">
+             <enum>QAbstractItemView::ExtendedSelection</enum>
+            </property>
+            <property name="selectionBehavior">
+             <enum>QAbstractItemView::SelectRows</enum>
+            </property>
+            <property name="sortingEnabled">
+             <bool>true</bool>
+            </property>
+           </widget>
+          </item>
+          <item>
            <layout class="QGridLayout" name="gridLayout">
-            <item row="0" column="0">
+            <item row="0" column="1">
              <layout class="QVBoxLayout" name="verticalLayout_5">
               <item>
                <layout class="QVBoxLayout" name="verticalLayout_9">
@@ -393,23 +426,7 @@
               </item>
              </layout>
             </item>
-            <item row="0" column="1" rowspan="2">
-             <widget class="QTreeView" name="ionlistTree">
-              <property name="sizePolicy">
-               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Preferred">
-                <horstretch>0</horstretch>
-                <verstretch>0</verstretch>
-               </sizepolicy>
-              </property>
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>100</height>
-               </size>
-              </property>
-             </widget>
-            </item>
-            <item row="1" column="0">
+            <item row="1" column="1">
              <layout class="QVBoxLayout" name="verticalLayout_8">
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_3">
@@ -435,6 +452,9 @@
                     </property>
                     <property name="text">
                      <string>Add</string>
+                    </property>
+                    <property name="default">
+                     <bool>true</bool>
                     </property>
                    </widget>
                   </item>
@@ -479,7 +499,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1263</width>
+     <width>1265</width>
      <height>22</height>
     </rect>
    </property>

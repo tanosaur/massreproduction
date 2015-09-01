@@ -14,7 +14,7 @@ from matplotlib import rcParams
 
 from itertools import cycle
 
-from models import WorkingPlotRecord, FinalPlotRecord
+from viewmodels import WorkingPlotRecord, FinalPlotRecord
 
 rcParams['keymap.save'] = u'super+s'
 
