@@ -1,99 +1,47 @@
-import sip
-sip.setapi('QString', 2)
-sip.setapi('QVariant', 2)
+from collections import namedtuple
+Isotope = namedtuple('Isotope', 'element number mass abundance')
+
+ISOTOPES = [
+    Isotope('Al', 27, 26.98, 100),
+    Isotope('Cr', 50, 49.95, 4.3),
+    Isotope('Cr', 52, 51.94, 83.8),
+    Isotope('Cr', 53, 52.94, 9.5),
+    Isotope('Cr', 54, 53.94, 2.4),
+    Isotope('H', 1, 1.008, 99.985),
+    Isotope('H', 2, 2.014, 0.015),
+]
+
+class Ion(namedtuple('Ion', 'isotope charge_state')):
+    @property
+    def mass_to_charge(self):
+        return self.isotope.mass / self.charge_state
+
+    @property
+    def name(self):
+        return '%s%s+%s' % (self.isotope.number, self.isotope.element, self.charge_state)
+
+Range = namedtuple('Range', 'start end')
+Method = namedtuple('Method', 'name function')
+Analysis = namedtuple('Analysis', 'method range reason')
+
+import json
+
+analyses = {
+Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range=Range(1.5,2.5), reason='Just coz'),
+Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
+}
 
 
-from PyQt4 import QtCore, QtGui
-
-class TableModel(QtCore.QAbstractTableModel):
-    """
-    A simple 5x4 table model to demonstrate the delegates
-    """
-    def rowCount(self, parent=QtCore.QModelIndex()): return 5
-    def columnCount(self, parent=QtCore.QModelIndex()): return 4
-
-    def data(self, index, role=QtCore.Qt.DisplayRole):
-        if not index.isValid(): return None
-        if not role==QtCore.Qt.DisplayRole: return None
-        return "{0:02d}".format(index.row())
-
-    def setData(self, index, value, role=QtCore.Qt.DisplayRole):
-        print ("setData", index.row(), index.column(), value)
-
-    def flags(self, index):
-        if (index.column() == 0):
-            return QtCore.Qt.ItemIsEditable | QtCore.Qt.ItemIsEnabled
-        else:
-            return QtCore.Qt.ItemIsEnabled
+def to_json(python_object):
+    if isinstance(python_object, bytes):
+        return {'__class__': 'bytes',
+                '__value__': list(python_object)}
+    if isinstance(python_object, tuple):
+        print('tuple found in %s' %(python_object))
+        return {'__class__': 'tuple',
+                '__value__': list(python_object)}
+    raise TypeError(repr(python_object) + ' is not JSON serializable')
 
 
-class ComboDelegate(QtGui.QItemDelegate):
-    """
-    A delegate that places a fully functioning QComboBox in every
-    cell of the column to which it's applied
-    """
-    def __init__(self, parent):
-
-        QtGui.QItemDelegate.__init__(self, parent)
-
-    def createEditor(self, parent, option, index):
-        combo = QtGui.QComboBox(parent)
-        li = []
-        li.append("Zero")
-        li.append("One")
-        li.append("Two")
-        li.append("Three")
-        li.append("Four")
-        li.append("Five")
-        combo.addItems(li)
-        self.connect(combo, QtCore.SIGNAL("currentIndexChanged(int)"), self, QtCore.SLOT("currentIndexChanged()"))
-        return combo
-
-    def setEditorData(self, editor, index):
-        editor.blockSignals(True)
-        editor.setCurrentIndex(int(index.model().data(index)))
-        editor.blockSignals(False)
-
-    def setModelData(self, editor, model, index):
-        model.setData(index, editor.currentIndex())
-
-    @QtCore.pyqtSlot()
-    def currentIndexChanged(self):
-        self.commitData.emit(self.sender())
-
-class TableView(QtGui.QTableView):
-    """
-    A simple table to demonstrate the QComboBox delegate.
-    """
-    def __init__(self, *args, **kwargs):
-        QtGui.QTableView.__init__(self, *args, **kwargs)
-
-        # Set the delegate for column 0 of our table
-        # self.setItemDelegateForColumn(0, ButtonDelegate(self))
-        self.setItemDelegateForColumn(0, ComboDelegate(self))
-
-
-if __name__=="__main__":
-    from sys import argv, exit
-
-    class Widget(QtGui.QWidget):
-        """
-        A simple test widget to contain and own the model and table.
-        """
-        def __init__(self, parent=None):
-            QtGui.QWidget.__init__(self, parent)
-
-            l=QtGui.QVBoxLayout(self)
-            self._tm=TableModel(self)
-            self._tv=TableView(self)
-            self._tv.setModel(self._tm)
-            for row in range(0, self._tm.rowCount()):
-                self._tv.openPersistentEditor(self._tm.index(row, 0))
-
-            l.addWidget(self._tv)
-
-    a=QtGui.QApplication(argv)
-    w=Widget()
-    w.show()
-    w.raise_()
-    exit(a.exec_())
+with open('trial.json', mode='w', encoding='utf-8') as f:
+    json.dump(analyses, f, default=to_json)

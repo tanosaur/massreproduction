@@ -116,6 +116,6 @@ class LoadAnalyses(QUndoCommand):
 
     def _read_mrfile(self, mrfile):
         with open(mrfile, 'r', encoding='utf-8') as f:
-            saved_analyses = json.loads(f)
+            saved_analyses = json.load(f)
 
         return saved_analyses

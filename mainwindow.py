@@ -5,7 +5,6 @@ import sys
 import ui_mainwindow
 from plots import WorkingFrame, RangedFrame
 import viewmodels
-from test import ComboDelegate
 import commands
 import models
 import itertools
@@ -118,9 +117,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         root = qmodel.invisibleRootItem()
 
         for ion, analysis in view_model.analyses.items():
+            print(ion, analysis)
             ion_name = QStandardItem(ion.name)
             ion_name.setData(ion, Qt.UserRole)
-            method = QStandardItem(analysis.method)
+            method = QStandardItem(analysis.method.name)
             start = QStandardItem(str(analysis.range.start))
             end = QStandardItem(str(analysis.range.end))
             reason = QStandardItem(analysis.reason)

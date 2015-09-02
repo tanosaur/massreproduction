@@ -1,6 +1,7 @@
 from collections import namedtuple
 import unittest
 import json
+import customserializer
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
@@ -174,7 +175,7 @@ class MethodsModel(QObject):
     def prime(self):
         # TODO iterate through folder and get filename, save as method name
         # in that file, save function with same name as method function
-        methods=('Manual', 'FWHM')
+        methods=('FWHM', 'FWTM', 'Manual')
         self.replace(methods)
 
 class AnalysesModel(QObject):
@@ -183,7 +184,10 @@ class AnalysesModel(QObject):
     def __init__(self):
         super(AnalysesModel, self).__init__(None)
 
-        self._analyses = {}
+        self._analyses = {
+        Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range=Range(1.5,2.5), reason='Just coz'),
+        Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
+        }
 
     def add_analyses(self, new_ions):
         old_analyses = self._analyses
@@ -191,8 +195,7 @@ class AnalysesModel(QObject):
         new_analyses = {}
         new_analyses.update(old_analyses)
         for ion in new_ions:
-            range = Range(start=ion.mass_to_charge, end=ion.mass_to_charge)
-            new_analyses[ion] = Analysis(method='Manual', range=range, reason=None)
+            new_analyses[ion] = Analysis(method=Method('Manual', None), range=Range(ion.mass_to_charge, ion.mass_to_charge), reason=None)
 
         self._analyses = new_analyses
         self.updated.emit(self._analyses)
@@ -203,10 +206,20 @@ class AnalysesModel(QObject):
     def on_ranges_updated(self, new_ranges):
         self.updated.emit(self._analyses)
 
-    def export_analyses(self):
-        with open('json.mr', mode='w', encoding='utf-8') as f:
-            json.dumps(self._analyses, f, indent=2)
+    def replace(self, new_analyses):
+        self._analyses = new_analyses
+        self.updated.emit(self._analyses)
 
+    def export_analyses(self):
+        analyses=
+        with open('json.mr', mode='w', encoding='utf-8') as f:
+            json.dumps(analyses, f, default=customserializer._to_json, indent=2)
+
+    def _to_json(python_object):
+        if isinstance(python_object, bytes):
+            return {'__class__': 'bytes',
+                    '__value__': list(python_object)}
+        raise TypeError(repr(python_object) + ' is not JSON serializable')
 
 class TestModels(unittest.TestCase):
 
