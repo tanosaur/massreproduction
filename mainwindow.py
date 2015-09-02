@@ -117,7 +117,6 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         root = qmodel.invisibleRootItem()
 
         for ion, analysis in view_model.analyses.items():
-            print(ion, analysis)
             ion_name = QStandardItem(ion.name)
             ion_name.setData(ion, Qt.UserRole)
             method = QStandardItem(analysis.method.name)

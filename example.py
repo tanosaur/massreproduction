@@ -7,6 +7,7 @@ def to_json(python_object):
         return {'__class__': 'time.asctime',
                 '__value__': time.asctime(python_object)}
     if isinstance(python_object, bytes):
+        print('hihi')
         return {'__class__': 'bytes',
                 '__value__': list(python_object)}
     raise TypeError(repr(python_object) + ' is not JSON serializable')
@@ -40,7 +41,7 @@ if __name__ == '__main__':
     print(type(entry2['tags']))
 
     with open('entry.json', 'w', encoding='utf-8') as f:
-        json.dump(entry, f, default=to_json)
+        json.dump(entry, f, default=to_json, sort_keys=True)
 
     with open('entry.json', 'r', encoding='utf-8') as f:
         entry2 = json.load(f, object_hook=from_json)

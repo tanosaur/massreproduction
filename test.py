@@ -31,17 +31,15 @@ Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range
 Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
 }
 
+analyses_list = []
 
-def to_json(python_object):
-    if isinstance(python_object, bytes):
-        return {'__class__': 'bytes',
-                '__value__': list(python_object)}
-    if isinstance(python_object, tuple):
-        print('tuple found in %s' %(python_object))
-        return {'__class__': 'tuple',
-                '__value__': list(python_object)}
-    raise TypeError(repr(python_object) + ' is not JSON serializable')
+for ion, analysis in analyses.items():
+    analyses_list.append(ion.name)
+    analyses_list.append({
+    'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
+    'Method': analysis.method.name,
+    'Range': [analysis.range.start, analysis.range.end],
+    'Reason': analysis.reason})
 
-
-with open('trial.json', mode='w', encoding='utf-8') as f:
-    json.dump(analyses, f, default=to_json)
+with open('json.mr', mode='w', encoding='utf-8') as f:
+    json.dump(analyses_list, f, indent=2)

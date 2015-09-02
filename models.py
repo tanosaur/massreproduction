@@ -1,7 +1,6 @@
 from collections import namedtuple
 import unittest
 import json
-import customserializer
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
@@ -185,8 +184,8 @@ class AnalysesModel(QObject):
         super(AnalysesModel, self).__init__(None)
 
         self._analyses = {
-        Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range=Range(1.5,2.5), reason='Just coz'),
-        Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
+        # Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range=Range(1.5,2.5), reason='Just coz'),
+        # Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
         }
 
     def add_analyses(self, new_ions):
@@ -207,19 +206,45 @@ class AnalysesModel(QObject):
         self.updated.emit(self._analyses)
 
     def replace(self, new_analyses):
-        self._analyses = new_analyses
-        self.updated.emit(self._analyses)
+
+        return old_analyses
 
     def export_analyses(self):
-        analyses=
-        with open('json.mr', mode='w', encoding='utf-8') as f:
-            json.dumps(analyses, f, default=customserializer._to_json, indent=2)
+        analyses = self._to_json(self._analyses)
+        with open('please.mr', mode='w', encoding='utf-8') as f:
+            json.dump(analyses, f, indent=2)
 
-    def _to_json(python_object):
-        if isinstance(python_object, bytes):
-            return {'__class__': 'bytes',
-                    '__value__': list(python_object)}
-        raise TypeError(repr(python_object) + ' is not JSON serializable')
+    def _to_json(self, analyses):
+        analyses_list = []
+        for ion, analysis in analyses.items():
+            analyses_list.append(ion.name)
+            analyses_list.append({
+            'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
+            'Method': analysis.method.name,
+            'Range': [analysis.range.start, analysis.range.end],
+            'Reason': analysis.reason})
+        return analyses_list
+
+    def read_mrfile(self, mrfile):
+        with open(mrfile, 'r', encoding='utf-8') as f:
+            contents = json.load(f)
+
+        new_analyses = self._from_json(contents)
+
+        return new_analyses
+
+    def _from_json(self, contents):
+        for entry in contents:
+            if isinstance(entry, dict):
+                element, number, mass, abundance, charge_state = entry.get('Ion')
+                method_name = entry.get('Method')
+                start, end = entry.get('Range')
+                reason = entry.get('Reason')
+
+                method = Method(method_name, None)
+                _range = Range(start, end)
+
+                self._analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method, _range, reason)})
 
 class TestModels(unittest.TestCase):
 

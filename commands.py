@@ -108,14 +108,8 @@ class LoadAnalyses(QUndoCommand):
         self._old_analyses=None
 
     def redo(self):
-        new_analyses = self._read_mrfile(self._filename)
-        self._old_analyses = self._model.replace(new_analyses)
+        new_analyses = self._model.read_mrfile(self._filename)
+        # self._old_analyses = self._model.replace(new_analyses)
 
-    def undo(self):
-        self._model.replace(self._old_analyses)
-
-    def _read_mrfile(self, mrfile):
-        with open(mrfile, 'r', encoding='utf-8') as f:
-            saved_analyses = json.load(f)
-
-        return saved_analyses
+    # def undo(self):
+    #     self._model.replace(self._old_analyses)
