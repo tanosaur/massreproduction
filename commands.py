@@ -75,6 +75,13 @@ class AddIonsToTable(QUndoCommand):
     def undo(self):
         self._model.replace(self._old_analyses)
 
+class MethodSelected(QUndoCommand):
+    def __init__(self, ion, method, model):
+        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))
+
+        self._model = model
+        
+
 class AddMethods(QUndoCommand):
     def __init__(self, methods, model):
         super(AddMethods, self).__init__('Add {0}'.format(', '.join(method.name for method in methods)))

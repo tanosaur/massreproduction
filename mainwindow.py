@@ -17,8 +17,9 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         combo = QComboBox(parent)
-        combo.addItems(self._methods)
-        combo.setCurrentIndex(self._methods.index(index.data()))
+        methods = [method.name for method in self._methods]
+        combo.addItems(methods)
+        combo.setCurrentIndex(methods.index(index.data()))
         return combo
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
@@ -143,7 +144,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
         print("Change: %s : %s" % (ion, method))
 
-        #command = commands.MethodSelected(ion, method, self._analyses_model)
+        command = commands.MethodSelected(ion, method, self._analyses_model)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
@@ -215,6 +216,7 @@ if __name__ == '__main__':
     bin_size_model.prime()
     suggested_ions_model.prime()
     methods_model.prime()
+    methods_model.request_run('dummy')
 
     main_window.show()
     app.exec_()

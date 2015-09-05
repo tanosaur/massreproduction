@@ -179,16 +179,44 @@ class MethodsModel(QObject):
         return old_methods
 
     def prime(self):
-        load_all_modules_from_dir('methods')
-        methods=('Dummy auto', 'FWHM', 'FWTM', 'Manual')
-        self.replace(methods)
+        self._load_all_modules_from_dir('methods')
 
-    def load_all_modules_from_dir(dirname):
+    def _load_all_modules_from_dir(self, dirname):
+        modules = []
         for importer, filename, _ in pkgutil.iter_modules([dirname]):
             full_path = '%s.%s' % (dirname, filename)
             if full_path not in sys.modules:
                 module = importlib.import_module(full_path)
+                modules.append(Method(filename.title(), module))
 
+        modules=self._add_manual_method(modules)
+        self.replace(tuple(modules))
+
+    def _add_manual_method(self, modules):
+        modules.append(Method('Manual', None))
+        return modules
+
+    def run_module(self, method):
+        try:
+            method_to_call = getattr(method.function, method.name)
+            required_inputs = method.function.required_inputs()
+            inputs = self._send_inputs(required_inputs)
+            output = method_to_call(inputs)
+            return output
+
+        except AttributeError:
+            print ('Function not found "%s" (%s)' % (method_name, arg))
+
+    def _send_inputs(self, required_inputs):
+        if required_inputs == 'suggested_m2c':
+            inputs = 11
+        return inputs
+
+    def request_run(self, method_name):
+        for method in self._methods:
+            if method_name == method.name:
+                output = self.run_module(method)
+                return output
 
 class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
@@ -209,7 +237,7 @@ class AnalysesModel(QObject):
     def make_analyses_from_suggest(self, new_ions):
         new_analyses = {}
         for ion in new_ions:
-            new_analyses.update({ion: Analysis(method=Method('Dummy auto', None), range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
+            new_analyses.update({ion: Analysis(method=Method('Dummy', None), range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
 
         return new_analyses
 
