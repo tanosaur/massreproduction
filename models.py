@@ -188,13 +188,7 @@ class MethodsModel(QObject):
             full_path = '%s.%s' % (dirname, filename)
             if full_path not in sys.modules:
                 module = importlib.import_module(full_path)
-                arg = 11
-                try:
-                    methodToCall = getattr(module, filename)
-                    start, end = methodToCall(arg)
-                    print (start, end)
-                except AttributeError:
-                    print ('Function not found "%s" (%s)' % (filename, arg))
+
 
 class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
