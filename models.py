@@ -2,7 +2,10 @@ from collections import namedtuple
 import unittest
 import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
-import methods
+import pkgutil
+import sys
+import importlib
+
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
 
@@ -176,10 +179,22 @@ class MethodsModel(QObject):
         return old_methods
 
     def prime(self):
-        # TODO iterate through folder and get filename, save as method name
-        # in that file, save function with same name as method function
+        load_all_modules_from_dir('methods')
         methods=('Dummy auto', 'FWHM', 'FWTM', 'Manual')
         self.replace(methods)
+
+    def load_all_modules_from_dir(dirname):
+        for importer, filename, _ in pkgutil.iter_modules([dirname]):
+            full_path = '%s.%s' % (dirname, filename)
+            if full_path not in sys.modules:
+                module = importlib.import_module(full_path)
+                arg = 11
+                try:
+                    methodToCall = getattr(module, filename)
+                    start, end = methodToCall(arg)
+                    print (start, end)
+                except AttributeError:
+                    print ('Function not found "%s" (%s)' % (filename, arg))
 
 class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
