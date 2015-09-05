@@ -69,7 +69,8 @@ class AddIonsToTable(QUndoCommand):
         self._old_analyses=None
 
     def redo(self):
-        self._old_analyses = self._model.add_analyses(self._ions)
+        made_analyses = self._model.make_analyses_from_suggest(self._ions)
+        self._old_analyses = self._model.append(made_analyses)
 
     def undo(self):
         self._model.replace(self._old_analyses)
@@ -96,7 +97,7 @@ class ExportAnalyses(QUndoCommand):
         self._model=model
 
     def redo(self):
-        self._model.export_analyses()
+        self._model.export_analyses_to_mrfile()
 
 class LoadAnalyses(QUndoCommand):
     def __init__(self, filename, model):
@@ -108,8 +109,8 @@ class LoadAnalyses(QUndoCommand):
         self._old_analyses=None
 
     def redo(self):
-        new_analyses = self._model.read_mrfile(self._filename)
-        # self._old_analyses = self._model.replace(new_analyses)
+        made_analyses = self._model.make_analyses_from_mrfile(self._filename)
+        self._old_analyses = self._model.append(made_analyses)
 
-    # def undo(self):
-    #     self._model.replace(self._old_analyses)
+    def undo(self):
+        self._model.replace(self._old_analyses)

@@ -2,6 +2,7 @@ from collections import namedtuple
 import unittest
 import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
+import methods
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
 
@@ -102,6 +103,9 @@ class SuggestedIonsModel(QObject):
 
         return old_suggested_ions
 
+    def prime(self):
+        self.updated.emit(self._suggested_ions)
+
 class AllRangesModel(QObject):
     updated = pyqtSignal(tuple)
 
@@ -174,7 +178,7 @@ class MethodsModel(QObject):
     def prime(self):
         # TODO iterate through folder and get filename, save as method name
         # in that file, save function with same name as method function
-        methods=('FWHM', 'FWTM', 'Manual')
+        methods=('Dummy auto', 'FWHM', 'FWTM', 'Manual')
         self.replace(methods)
 
 class AnalysesModel(QObject):
@@ -183,33 +187,32 @@ class AnalysesModel(QObject):
     def __init__(self):
         super(AnalysesModel, self).__init__(None)
 
-        self._analyses = {
-        # Ion(Isotope('H', 2, 2.014, 0.015),1): Analysis(method=Method('FWHM',None), range=Range(1.5,2.5), reason='Just coz'),
-        # Ion(Isotope('Cr', 53, 52.94, 9.5),2): Analysis(method=Method('FWTM',None), range=Range(25.5,26.5), reason='Felt like it')
-        }
+        self._analyses = {}
 
-    def add_analyses(self, new_ions):
-        old_analyses = self._analyses
+    def append(self, new_analyses):
+        old_analyses = self._analyses.copy()
 
-        new_analyses = {}
-        new_analyses.update(old_analyses)
-        for ion in new_ions:
-            new_analyses[ion] = Analysis(method=Method('Manual', None), range=Range(ion.mass_to_charge, ion.mass_to_charge), reason=None)
-
-        self._analyses = new_analyses
+        self._analyses.update(new_analyses)
         self.updated.emit(self._analyses)
 
         return old_analyses
+
+    def make_analyses_from_suggest(self, new_ions):
+        new_analyses = {}
+        for ion in new_ions:
+            new_analyses.update({ion: Analysis(method=Method('Dummy auto', None), range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
+
+        return new_analyses
+
+    def replace(self, new_analyses):
+        self._analyses = new_analyses
+        self.updated.emit(self._analyses)
 
     @pyqtSlot(tuple)
     def on_ranges_updated(self, new_ranges):
         self.updated.emit(self._analyses)
 
-    def replace(self, new_analyses):
-
-        return old_analyses
-
-    def export_analyses(self):
+    def export_analyses_to_mrfile(self):
         analyses = self._to_json(self._analyses)
         with open('please.mr', mode='w', encoding='utf-8') as f:
             json.dump(analyses, f, indent=2)
@@ -225,7 +228,7 @@ class AnalysesModel(QObject):
             'Reason': analysis.reason})
         return analyses_list
 
-    def read_mrfile(self, mrfile):
+    def make_analyses_from_mrfile(self, mrfile):
         with open(mrfile, 'r', encoding='utf-8') as f:
             contents = json.load(f)
 
@@ -234,6 +237,7 @@ class AnalysesModel(QObject):
         return new_analyses
 
     def _from_json(self, contents):
+        new_analyses = {}
         for entry in contents:
             if isinstance(entry, dict):
                 element, number, mass, abundance, charge_state = entry.get('Ion')
@@ -244,7 +248,9 @@ class AnalysesModel(QObject):
                 method = Method(method_name, None)
                 _range = Range(start, end)
 
-                self._analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method, _range, reason)})
+                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method, _range, reason)})
+
+        return new_analyses
 
 class TestModels(unittest.TestCase):
 

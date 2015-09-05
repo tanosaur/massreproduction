@@ -130,6 +130,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.rangedTable.setItemDelegateForColumn(1, MethodsComboDelegate(view_model.methods, self.rangedTable))
         for row in range(0, qmodel.rowCount()):
             self.rangedTable.openPersistentEditor(qmodel.index(row, 1))
+        self.rangedTable.setColumnWidth(1, 95)
 
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):
@@ -212,6 +213,7 @@ if __name__ == '__main__':
 
     loaded_m2c_model.prime()
     bin_size_model.prime()
+    suggested_ions_model.prime()
     methods_model.prime()
 
     main_window.show()
