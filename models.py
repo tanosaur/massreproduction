@@ -100,11 +100,8 @@ class MethodsModel(QObject):
         self._methods = {}
 
     def replace(self, new_methods):
-        old_methods = self._methods
         self._methods = new_methods
         self.updated.emit(self._methods)
-
-        return old_methods
 
     def prime(self):
         self.updated.emit(self._methods)

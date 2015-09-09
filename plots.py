@@ -66,8 +66,8 @@ class WorkingFrame(QMainWindow):
         if record.all_analyses:
             #TODO adjust ymax kwarg to abundance height
             #TODO adjust colors so colors are per element (sort by element..?)
-            for ion in all_analyses:
-                start, end = all_analyses[ion].range
+            for ion, analysis in record.all_analyses.items():
+                start, end = analysis.range
                 self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
 
         self.canvas.draw()

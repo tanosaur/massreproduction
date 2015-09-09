@@ -8,6 +8,7 @@ import viewmodels
 import commands
 import models
 import itertools
+from methods import load_all_methods_from_dir
 
 class MethodsComboDelegate(QStyledItemDelegate):
     def __init__(self, methods, parent):
@@ -17,17 +18,18 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
     def createEditor(self, parent, option, index):
         combo = QComboBox(parent)
-        methods = [method.name for method in self._methods]
+        methods = list(self._methods.keys())
         combo.addItems(methods)
         combo.setCurrentIndex(methods.index(index.data()))
         return combo
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, parent=None):
+    def __init__(self, undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
+        self._undo_stack = undo_stack
         self._loaded_m2cs_model = loaded_m2cs_model
         self._bin_size_model = bin_size_model
         self._suggested_ions_model = suggested_ions_model
@@ -35,8 +37,9 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self._methods_model = methods_model
         self._metadata_model = metadata_model
 
-        self.undoStack = QUndoStack(self)
-        history_view = QUndoView(self.undoStack, parent=self.stackView)
+        self._methods_view_model = methods_view_model
+
+        history_view = QUndoView(self._undo_stack, parent=self.stackView)
         history_view.setEmptyLabel('New program')
         self.suggestmodel=None
 
@@ -51,17 +54,12 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
         if pos_filename:
             command = commands.LoadPOS(pos_filename, self._loaded_m2cs_model, self._metadata_model)
-            self.undoStack.push(command)
+            self._undo_stack.push(command)
 
     @pyqtSlot(int)
     def on_binsizeSpinBox_valueChanged(self, bin_size_value):
         command = commands.BinSizeValueChange(bin_size_value, self._bin_size_model)
-        self.undoStack.push(command)
-
-    @pyqtSlot()
-    def on_methods_updated(self):
-        command = commands.UpdateMethods(self._methods_model)
-        self.undoStack.push(command)
+        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_suggestButton_clicked(self):
@@ -70,7 +68,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
             abs(int(self.maxchargestateLineEdit.text())),
             self._suggested_ions_model
         )
-        self.undoStack.push(command)
+        self._undo_stack.push(command)
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
@@ -109,7 +107,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         # TODO fix so filter not needed, otherwise, leave comment explanation
         ions=list(filter(None,[self.suggestmodel.data(index,32) for index in qmodel_indices]))
         command = commands.AddIonsToTable(ions, self._analyses_model)
-        self.undoStack.push(command)
+        self._undo_stack.push(command)
 
     @pyqtSlot(dict)
     def on_analyses_viewmodel_updated(self, view_model):
@@ -128,8 +126,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
             ion_name = QStandardItem(ion.name)
             ion_name.setData(ion, Qt.UserRole)
             method = QStandardItem(analysis.method)
-            start = QStandardItem(str(analysis.range.start))
-            end = QStandardItem(str(analysis.range.end))
+            start = QStandardItem(str(round(analysis.range.start,2)))
+            end = QStandardItem(str(round(analysis.range.end,2)))
             reason = QStandardItem(analysis.reason)
 
             root.appendRow([ion_name, method, start, end, reason])
@@ -156,22 +154,22 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
         command = commands.ExportAnalyses(self._analyses_model)
-        self.undoStack.push(command)
+        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_action_LoadMR_triggered(self):
         mr_filename=QFileDialog.getOpenFileName(self,"Open .mr file",'', 'MR (*.mr)')
         if mr_filename:
             command = commands.LoadAnalyses(mr_filename, self._analyses_model)
-            self.undoStack.push(command)
+            self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_actionUndo_triggered(self):
-        self.undoStack.undo()
+        self._undo_stack.undo()
 
     @pyqtSlot()
     def on_actionRedo_triggered(self):
-        self.undoStack.redo()
+        self._undo_stack.redo()
 
     @pyqtSlot(str)
     def on_maxchargestateLineEdit_textEdited(self):
@@ -201,8 +199,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.experimentIDLineEdit.setText(metadata.ID)
         self.experimentdescriptionTextEdit.setText(metadata.description)
 
+
 if __name__ == '__main__':
     app=QApplication(sys.argv)
+    undo_stack = QUndoStack()
 
     loaded_m2cs_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
@@ -212,7 +212,7 @@ if __name__ == '__main__':
     all_analyses_model = models.AllAnalysesModel()
     metadata_model = models.MetadataModel()
 
-    main_window = MainWindow(loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_model, metadata_model)
+    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_model, metadata_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
@@ -246,13 +246,14 @@ if __name__ == '__main__':
 
     methods_model.updated.connect(analyses_view_model.on_methods_updated)
     methods_model.updated.connect(methods_view_model.on_methods_updated)
-    methods_model.updated.connect(main_window.on_methods_updated)
 
     loaded_m2cs_model.prime()
     bin_size_model.prime()
     suggested_ions_model.prime()
-    methods_model.prime()
     metadata_model.prime()
+
+    methods = load_all_methods_from_dir('methods')
+    methods_model.replace(methods)
 
     main_window.show()
     app.exec_()

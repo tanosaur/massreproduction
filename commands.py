@@ -1,6 +1,3 @@
-import sys
-import pkgutil
-import importlib
 import json
 import aptread.aptload
 
@@ -71,7 +68,6 @@ class BinSizeValueChange(QUndoCommand):
     def undo(self):
         self._model.replace_value(self._old_value)
 
-
 class SuggestIons(QUndoCommand):
 
     def __init__(self, known_elements, max_charge_state, model):
@@ -122,7 +118,7 @@ class AddIonsToTable(QUndoCommand):
 
 class MethodSelected(QUndoCommand):
     def __init__(self, ion, method_name, analyses_model, methods_model):
-        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))
+        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method_name))
 
         self._analyses_model = analyses_model
         self._methods_view_model = methods_model
@@ -141,36 +137,6 @@ class MethodSelected(QUndoCommand):
 
     def undo(self):
         self._analyses_model.update_method_for_ion(self._old_ion, self._old_method_name, self._old_range)
-
-
-class UpdateMethods(QUndoCommand):
-    def __init__(self, model):
-        super(UpdateMethods, self).__init__('Update methods')
-
-        self._model=model
-        self._old_methods=None
-
-    def redo(self):
-        new_methods = self._load_all_modules_from_dir('methods')
-        self._old_methods = self._model.replace(new_methods)
-
-    def undo(self):
-        self._model.replace(self._old_methods)
-
-    def _load_all_modules_from_dir(self, dirname):
-        modules = {}
-        for importer, filename, _ in pkgutil.iter_modules([dirname]):
-            full_path = '%s.%s' % (dirname, filename)
-            if full_path not in sys.modules:
-                module = importlib.import_module(full_path)
-                modules.update({filename.title(): module})
-
-        modules=self._add_manual_method(modules)
-        return modules
-
-    def _add_manual_method(self, modules):
-        modules.update({'Manual': None})
-        return modules
 
 class ExportAnalyses(QUndoCommand):
     def __init__(self, model):
