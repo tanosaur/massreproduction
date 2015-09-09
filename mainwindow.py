@@ -1,5 +1,5 @@
 from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty
-from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QStandardItem, QComboBox, QStyledItemDelegate
+from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QStandardItem, QComboBox, QStyledItemDelegate, QLabel
 
 import sys
 import ui_mainwindow
@@ -24,7 +24,7 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, parent=None):
+    def __init__(self, loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, methods_model, metadata_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
@@ -32,6 +32,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self._bin_size_model = bin_size_model
         self._suggested_ions_model = suggested_ions_model
         self._analyses_model = analyses_model
+        self._methods_model = methods_model
+        self._metadata_model = metadata_model
 
         self.undoStack = QUndoStack(self)
         history_view = QUndoView(self.undoStack, parent=self.stackView)
@@ -57,10 +59,15 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.undoStack.push(command)
 
     @pyqtSlot()
+    def on_methods_updated(self):
+        command = commands.UpdateMethods(self._methods_model)
+        self.undoStack.push(command)
+
+    @pyqtSlot()
     def on_suggestButton_clicked(self):
         command = commands.SuggestIons(
-            str(self.knownelementsLineEdit.text()),
-            abs(int(str(self.maxchargestateLineEdit.text()))),
+            self.knownelementsLineEdit.text(),
+            abs(int(self.maxchargestateLineEdit.text())),
             self._suggested_ions_model
         )
         self.undoStack.push(command)
@@ -140,11 +147,11 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         method_index = index.sibling(index.row(), 1)
 
         ion = ion_index.data(Qt.UserRole)
-        method = method_index.data(Qt.DisplayRole)
+        method_name = method_index.data(Qt.DisplayRole)
 
-        print("Change: %s : %s" % (ion, method))
+        print("Change: %s : %s" % (ion, method_name))
 
-        command = commands.MethodSelected(ion, method, self._analyses_model)
+        command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_model)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
@@ -171,18 +178,36 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.suggestButton.setEnabled(True)
         self.suggestButton.setFocus()
 
+    @pyqtSlot()
+    def on_experimentIDLineEdit_selectionChanged(self):
+        self.experimentIDLineEdit.clear()
+
+    @pyqtSlot()
+    def on_experimentIDLineEdit_editingFinished(self):
+        experiment_ID = self.experimentIDLineEdit.text()
+        command = commands.UpdateExperimentID(experiment_ID, metadata_model)
+
+    @pyqtSlot()
+    def on_experimentdescriptionTextEdit_selectionChanged(self):
+        self.experimentdescriptionTextEdit.clear()
+
+    @pyqtSlot()
+    def on_experimentdescriptionTextEdit_editingFinished(self):
+        experiment_description = self.experimentdescriptionTextEdit.text()
+        command = commands.UpdateExperimentDescription(experiment_description, metadata_model)
+
 if __name__ == '__main__':
     app=QApplication(sys.argv)
 
     loaded_m2c_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
     suggested_ions_model = models.SuggestedIonsModel()
-    all_ranges_model = models.AllRangesModel()
-    committed_ranges_model = models.CommittedRangesModel()
+    committed_analyses_model = models.CommittedAnalysesModel()
     methods_model = models.MethodsModel()
-    analyses_model = models.AnalysesModel()
+    all_analyses_model = models.AllAnalysesModel()
+    metadata_model = models.MetadataModel()
 
-    main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model)
+    main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, methods_model, metadata_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
@@ -202,21 +227,21 @@ if __name__ == '__main__':
     all_ranges_model.updated.connect(committed_ranges_model.on_ranges_updated)
     all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
 
-    committed_ranges_model.updated.connect(final_plot_view_model.on_ranges_updated)
+    committed_analyses_model.updated.connect(final_plot_view_model.on_ranges_updated)
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(main_window.on_ions_updated)
 
     analyses_view_model = viewmodels.AnalysesViewModel()
     analyses_view_model.updated.connect(main_window.on_analyses_viewmodel_updated)
-    analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
+    all_analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
     methods_model.updated.connect(analyses_view_model.on_methods_updated)
 
     loaded_m2c_model.prime()
     bin_size_model.prime()
     suggested_ions_model.prime()
     methods_model.prime()
-    methods_model.request_run('dummy')
+    metadata_model.prime()
 
     main_window.show()
     app.exec_()

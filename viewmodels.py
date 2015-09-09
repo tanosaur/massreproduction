@@ -6,6 +6,40 @@ from collections import namedtuple
 
 FinalPlotRecord = namedtuple('FinalPlotRecord', 'm2c bin_size ranges')
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2c bin_size ranges ions')
+MRRecord = namedtuple('MRRecord', 'analyses metadata')
+
+class MethodsViewModel(QObject):
+
+    @pyqtSlot(tuple)
+    def on_m2c_updated(self, new_m2c):
+        self._record = self._record._replace(m2c=new_m2c)
+        self.updated.emit(self._record)
+
+    @pyqtSlot(BinSizeRecord)
+    def on_bin_size_updated(self, new_bin_size):
+        self._record = self._record._replace(bin_size=new_bin_size)
+        self.updated.emit(self._record)
+
+
+class MRViewModel(QObject):
+    def __init__(self):
+        super(MRViewModel, self).__init__(None)
+
+        self._record = MRRecord(
+            analyses=(),
+            metadata=()
+            )
+
+    @pyqtSlot(tuple)
+    def on_metadata_updated(self, new_metadata):
+        self._record = self.record._replace(metadata=new_metadata)
+        self.updated.emit(self._record)
+
+    @pyqtSlot(dict)
+    def on_analyses_updated(self, new_analyses):
+        self._record = self._record._replace(analyses=new_analyses)
+        self.updated.emit(self._record)
+
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)

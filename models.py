@@ -2,10 +2,6 @@ from collections import namedtuple
 import unittest
 import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
-import pkgutil
-import sys
-import importlib
-
 
 Isotope = namedtuple('Isotope', 'element number mass abundance')
 
@@ -29,9 +25,9 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
         return '%s%s+%s' % (self.isotope.number, self.isotope.element, self.charge_state)
 
 Range = namedtuple('Range', 'start end')
-Method = namedtuple('Method', 'name function')
 Analysis = namedtuple('Analysis', 'method range reason')
 BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
+ExperimentInfo = namedtuple('Experiment', 'ID description')
 
 class LoadedM2CModel(QObject):
     updated = pyqtSignal(tuple)
@@ -84,20 +80,6 @@ class SuggestedIonsModel(QObject):
 
         self._suggested_ions = ()
 
-    def suggest(self, known_elements, max_charge_state):
-        known_elements=known_elements.split(',')
-        working_suggested_ions=[]
-
-        for element in known_elements:
-            for isotope in ISOTOPES:
-                if element == isotope.element:
-                    for charge_state in range(1,max_charge_state+1):
-                        working_suggested_ions.append(Ion(isotope, charge_state))
-
-        suggested_ions=tuple(working_suggested_ions)
-
-        return suggested_ions
-
     def replace(self, new_suggested_ions):
         old_suggested_ions = self._suggested_ions
         self._suggested_ions = new_suggested_ions
@@ -109,27 +91,46 @@ class SuggestedIonsModel(QObject):
     def prime(self):
         self.updated.emit(self._suggested_ions)
 
-class AllRangesModel(QObject):
+class MethodsModel(QObject):
+    updated = pyqtSignal(dict)
+
+    def __init__(self):
+        super(MethodsModel, self).__init__(None)
+
+        self._methods = ()
+
+    def replace(self, new_methods):
+        old_methods = self._methods
+        self._methods = new_methods
+        self.updated.emit(self._methods)
+
+        return old_methods
+
+    def _run_method_for_ion(self, method_name):
+        module = self._methods[method_name]
+
+        try:
+            method_to_call = getattr(module, method_name.lower())
+            required_inputs = module.required_inputs()
+            inputs = self._send_inputs(required_inputs)
+            start, end = method_to_call(inputs)
+            return Range(start, end)
+
+        except AttributeError:
+            print ('Function not found "%s"' % (method.name))
+
+    def _send_inputs(self, required_inputs):
+        if required_inputs == 'suggested_m2c':
+            inputs = 11
+        #
+        # {'suggested_m2c': from_analyses_model_get_m2c()}
+        return inputs
+
+class CommittedAnalysesModel(QObject):
     updated = pyqtSignal(tuple)
 
     def __init__(self):
-        super(AllRangesModel, self).__init__(None)
-
-        self._ranges = ()
-
-    def replace(self, new_ranges):
-        old_ranges = self._ranges
-        self._ranges = new_ranges
-
-        self.updated.emit(self._ranges)
-
-        return old_ranges
-
-class CommittedRangesModel(QObject):
-    updated = pyqtSignal(tuple)
-
-    def __init__(self):
-        super(CommittedRangesModel, self).__init__(None)
+        super(CommittedAnalysesModel, self).__init__(None)
 
         self._ranges=()
         self._committedranges = ()
@@ -148,7 +149,7 @@ class CommittedRangesModel(QObject):
 # range_b = Range()
 # range_c = Range()
 #
-# model = CommittedRangesModel()
+# model = CommittedAnalysesModel()
 # model.on_ranges_updated((range_a, range_b))
 # model.commit((range_a,))
 #
@@ -163,66 +164,11 @@ class CommittedRangesModel(QObject):
 #
 # # NOW emit will emit updated, with (range_c)
 
-class MethodsModel(QObject):
-    updated = pyqtSignal(tuple)
-
-    def __init__(self):
-        super(MethodsModel, self).__init__(None)
-
-        self._methods = ()
-
-    def replace(self, new_methods):
-        old_methods = self._methods
-        self._methods = new_methods
-        self.updated.emit(self._methods)
-
-        return old_methods
-
-    def prime(self):
-        self._load_all_modules_from_dir('methods')
-
-    def _load_all_modules_from_dir(self, dirname):
-        modules = []
-        for importer, filename, _ in pkgutil.iter_modules([dirname]):
-            full_path = '%s.%s' % (dirname, filename)
-            if full_path not in sys.modules:
-                module = importlib.import_module(full_path)
-                modules.append(Method(filename.title(), module))
-
-        modules=self._add_manual_method(modules)
-        self.replace(tuple(modules))
-
-    def _add_manual_method(self, modules):
-        modules.append(Method('Manual', None))
-        return modules
-
-    def run_module(self, method):
-        try:
-            method_to_call = getattr(method.function, method.name)
-            required_inputs = method.function.required_inputs()
-            inputs = self._send_inputs(required_inputs)
-            output = method_to_call(inputs)
-            return output
-
-        except AttributeError:
-            print ('Function not found "%s" (%s)' % (method_name, arg))
-
-    def _send_inputs(self, required_inputs):
-        if required_inputs == 'suggested_m2c':
-            inputs = 11
-        return inputs
-
-    def request_run(self, method_name):
-        for method in self._methods:
-            if method_name == method.name:
-                output = self.run_module(method)
-                return output
-
-class AnalysesModel(QObject):
+class AllAnalysesModel(QObject):
     updated = pyqtSignal(dict)
 
     def __init__(self):
-        super(AnalysesModel, self).__init__(None)
+        super(AllAnalysesModel, self).__init__(None)
 
         self._analyses = {}
 
@@ -234,20 +180,25 @@ class AnalysesModel(QObject):
 
         return old_analyses
 
-    def make_analyses_from_suggest(self, new_ions):
-        new_analyses = {}
-        for ion in new_ions:
-            new_analyses.update({ion: Analysis(method=Method('Dummy', None), range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
-
-        return new_analyses
-
     def replace(self, new_analyses):
         self._analyses = new_analyses
         self.updated.emit(self._analyses)
 
-    @pyqtSlot(tuple)
-    def on_ranges_updated(self, new_ranges):
+    def update_method_for_ion(self, ion, method_name, _range):
+        old_analysis = self._analyses[ion]
+        self._analyses[ion] = old_analysis._replace(
+            method=method_name,
+            range=_range)
         self.updated.emit(self._analyses)
+
+        return ion, old_analysis.method, old_analysis.range
+
+    def make_analyses_from_suggest(self, new_ions):
+        new_analyses = {}
+        for ion in new_ions:
+            new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
+
+        return new_analyses
 
     def export_analyses_to_mrfile(self):
         analyses = self._to_json(self._analyses)
@@ -289,33 +240,31 @@ class AnalysesModel(QObject):
 
         return new_analyses
 
-class TestModels(unittest.TestCase):
 
-    def test_ions_suggested(self):
-        suggested_ions_model=SuggestedIonsModel()
-        known_elements='Al,H'
-        max_charge_state=2
-        suggestions=suggested_ions_model.suggest(known_elements, max_charge_state)
-        expected_suggestions=(
-        Ion(Isotope('Al', 27, 26.98, 100),1),
-        Ion(Isotope('Al', 27, 26.98, 100),2),
-        Ion(Isotope('H', 1, 1.008, 99.985),1),
-        Ion(Isotope('H', 1, 1.008, 99.985),2),
-        Ion(Isotope('H', 2, 2.014, 0.015),1),
-        Ion(Isotope('H', 2, 2.014, 0.015),2),
-        )
+class MetadataModel(QObject):
+    updated = pyqtSignal()
 
-        self.assertTrue(suggestions, expected_suggestions)
+    def __init__(self):
+        super(MetadataModel, self).__init__(None)
 
-    # def CommittedRangesModel_with_committed_ranges(self):
-    #     committed_ranges_model=CommittedRangesModel()
-    #     range_a=Range(1,2,3)
-    #     range_b=Range(1,3,4)
-    #     ranges=(range_a, range_b)
-    #     committed_ranges_model.commit(range_a)
-    #     all_ranges_model=AllRangesModel()
-    #     all_ranges_model.replace(ranges)
-    #     self.assertTrue()
+        self._metadata = ()
+
+    def replace_experiment_ID(self, new_experiment_ID):
+        old_experiment_ID = self._metadata.ID
+        self._metadata.ID = new_experiment_ID
+        self.updated.emit(self._metadata) #Currently not updating anything - need for model at all?
+
+        return old_experiment_ID
+
+    def replace_experiment_description(self, new_experiment_description):
+        old_experiment_description = self._metadata.description
+        self._metadata.description = new_experiment_description
+        self.updated.emit(self._metadata)
+
+        return old_experiment_description
+
+    def prime(self):
+        self._metadata = ExperimentInfo(ID='Experiment ID',description='Description...')
 
 if __name__ == '__main__':
     unittest.main()
