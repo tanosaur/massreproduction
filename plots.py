@@ -64,11 +64,10 @@ class WorkingFrame(QMainWindow):
                 self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
 
         if record.all_analyses:
-            #TODO adjust ymax kwarg to abundance height
             #TODO adjust colors so colors are per element (sort by element..?)
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
-                self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
+                self.ax.axvspan(start, end, facecolor='g', alpha=0.5)
 
         self.canvas.draw()
 
@@ -117,10 +116,9 @@ class RangedFrame(QMainWindow):
             self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
 
         if record.committed_analyses:
-            #TODO adjust ymax kwarg to abundance height
             #TODO adjust colors so colors are per element (sort by element..?)
-            for ion in all_analyses:
-                start, end = committed_analyses[ion].range
+            for ion, analysis in record.committed_analyses.items():
+                start, end = analysis.range
                 self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
 
 
