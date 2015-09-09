@@ -1,33 +1,40 @@
-import unittest
-import numpy as np
+import sys
+import pkgutil
+import importlib
 import json
 import aptread.aptload
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
-from models import Isotope, ISOTOPES, Ion, Range, Method, Analysis
-import sys
-import pkgutil
-import importlib
+from models import Isotope, ISOTOPES, Ion, Range, Analysis
 
 
 class LoadPOS(QUndoCommand):
-    def __init__(self, posfile, model):
+    def __init__(self, posfile, m2c_model, metadata_model):
         super(LoadPOS, self).__init__('Load (%s)' %posfile)
 
         self._posfile =  posfile
-        self._model = model
+        self._m2c_model = m2c_model
+        self._metadata_model = metadata_model
 
         self._old_m2cs = None
+        self._old_experiment_ID = None
 
     def redo(self):
         new_m2cs = self._read_posfile(self._posfile)
-        self._old_m2cs = self._model.replace(new_m2cs)
+        self._old_m2cs = self._m2c_model.replace(new_m2cs)
+
+        new_experiment_ID = self._create_experiment_ID(self._posfile)
+        self._old_experiment_ID = self._metadata_model.replace_experiment_ID(new_experiment_ID)
 
     def undo(self):
-        self._model.replace(self._old_m2cs)
+        self._m2c_model.replace(self._old_m2cs)
 
     def _read_posfile(self, posfile):
         return tuple(aptread.aptload.POSData(posfile).pos.mc.tolist())
+
+    def _create_experiment_ID(self, posfile):
+        experiment_ID = posfile[:-4]
+        return experiment_ID
 
 class LoadEPOS(QUndoCommand):
     def __init__(self, posfile, model):
@@ -84,7 +91,7 @@ class SuggestIons(QUndoCommand):
     def undo(self):
         self._model.replace(self._old_suggested_ions)
 
-    def suggest(self, known_elements, max_charge_state):
+    def _suggest(self, known_elements, max_charge_state):
         known_elements=known_elements.split(',')
         working_suggested_ions=[]
 
@@ -118,7 +125,7 @@ class MethodSelected(QUndoCommand):
         super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))
 
         self._analyses_model = analyses_model
-        self._methods_model = methods_model
+        self._methods_view_model = methods_model
 
         self._ion = ion
         self._method_name = method_name
@@ -129,7 +136,7 @@ class MethodSelected(QUndoCommand):
         self._old_range = None
 
     def redo(self):
-        self._new_range = self._methods_model.run_method_for_ion(self._method_name)
+        self._new_range = self._methods_view_model.run_method_for_ion(self._ion, self._method_name)
         self._old_ion, self._old_method_name, self._old_range = self._analyses_model.update_method_for_ion(self._ion, self._method_name, self._new_range)
 
     def undo(self):
@@ -137,8 +144,8 @@ class MethodSelected(QUndoCommand):
 
 
 class UpdateMethods(QUndoCommand):
-    def __init__(self, methods, model):
-        super(UpdateMethods, self).__init__('Add {0}'.format(', '.join(method.name for method in methods)))
+    def __init__(self, model):
+        super(UpdateMethods, self).__init__('Update methods')
 
         self._model=model
         self._old_methods=None

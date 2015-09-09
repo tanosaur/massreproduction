@@ -45,14 +45,13 @@ class WorkingFrame(QMainWindow):
 
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
-        print('working plot updated')
 
         self.ax.cla()
 
         self.lines = 0
 
-        if record.m2c:
-            self.ax.hist(record.m2c, record.bin_size.value, histtype='step')
+        if record.m2cs:
+            self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
 
         self.ax.set_yscale('log')
 
@@ -64,8 +63,12 @@ class WorkingFrame(QMainWindow):
                 self.ax.axvline(ion.mass_to_charge, color=line_color, picker=0.5)
                 self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
 
-        if record.ranges:
-            pass
+        if record.all_analyses:
+            #TODO adjust ymax kwarg to abundance height
+            #TODO adjust colors so colors are per element (sort by element..?)
+            for ion in all_analyses:
+                start, end = all_analyses[ion].range
+                self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
 
         self.canvas.draw()
 
@@ -105,17 +108,21 @@ class RangedFrame(QMainWindow):
 
     @pyqtSlot(FinalPlotRecord)
     def on_updated(self, record):
-        print('final plot updated')
 
         self.ax.cla()
 
         self.lines = 0
 
-        if record.m2c:
-            self.ax.hist(record.m2c, record.bin_size.value, histtype='step')
+        if record.m2cs:
+            self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
 
-        if record.ranges:
-            pass
+        if record.committed_analyses:
+            #TODO adjust ymax kwarg to abundance height
+            #TODO adjust colors so colors are per element (sort by element..?)
+            for ion in all_analyses:
+                start, end = committed_analyses[ion].range
+                self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
+
 
         self.ax.set_yscale('log')
         self.canvas.draw()

@@ -24,11 +24,11 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, methods_model, metadata_model, parent=None):
+    def __init__(self, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
-        self._loaded_m2c_model = loaded_m2c_model
+        self._loaded_m2cs_model = loaded_m2cs_model
         self._bin_size_model = bin_size_model
         self._suggested_ions_model = suggested_ions_model
         self._analyses_model = analyses_model
@@ -50,7 +50,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     def on_actionLoad_triggered(self):
         pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
         if pos_filename:
-            command = commands.LoadM2C(pos_filename, self._loaded_m2c_model)
+            command = commands.LoadPOS(pos_filename, self._loaded_m2cs_model, self._metadata_model)
             self.undoStack.push(command)
 
     @pyqtSlot(int)
@@ -127,7 +127,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         for ion, analysis in view_model.analyses.items():
             ion_name = QStandardItem(ion.name)
             ion_name.setData(ion, Qt.UserRole)
-            method = QStandardItem(analysis.method.name)
+            method = QStandardItem(analysis.method)
             start = QStandardItem(str(analysis.range.start))
             end = QStandardItem(str(analysis.range.end))
             reason = QStandardItem(analysis.reason)
@@ -151,7 +151,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
         print("Change: %s : %s" % (ion, method_name))
 
-        command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_model)
+        command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
@@ -196,10 +196,15 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         experiment_description = self.experimentdescriptionTextEdit.text()
         command = commands.UpdateExperimentDescription(experiment_description, metadata_model)
 
+    @pyqtSlot(tuple)
+    def on_metadata_updated(self, metadata):
+        self.experimentIDLineEdit.setText(metadata.ID)
+        self.experimentdescriptionTextEdit.setText(metadata.description)
+
 if __name__ == '__main__':
     app=QApplication(sys.argv)
 
-    loaded_m2c_model = models.LoadedM2CModel()
+    loaded_m2cs_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
     suggested_ions_model = models.SuggestedIonsModel()
     committed_analyses_model = models.CommittedAnalysesModel()
@@ -207,37 +212,43 @@ if __name__ == '__main__':
     all_analyses_model = models.AllAnalysesModel()
     metadata_model = models.MetadataModel()
 
-    main_window = MainWindow(loaded_m2c_model, bin_size_model, suggested_ions_model, analyses_model, methods_model, metadata_model)
+    main_window = MainWindow(loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_model, metadata_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
     final_plot_view_model = viewmodels.FinalPlotViewModel()
+    methods_view_model = viewmodels.MethodsViewModel()
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
-    loaded_m2c_model.updated.connect(working_plot_view_model.on_m2c_updated)
-    loaded_m2c_model.updated.connect(final_plot_view_model.on_m2c_updated)
+    loaded_m2cs_model.updated.connect(working_plot_view_model.on_m2cs_updated)
+    loaded_m2cs_model.updated.connect(final_plot_view_model.on_m2cs_updated)
+    loaded_m2cs_model.updated.connect(methods_view_model.on_methods_updated)
 
     bin_size_model.updated.connect(main_window.on_bin_size_updated)
     bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
     bin_size_model.updated.connect(final_plot_view_model.on_bin_size_updated)
+    bin_size_model.updated.connect(methods_view_model.on_methods_updated)
 
-    all_ranges_model.updated.connect(working_plot_view_model.on_ranges_updated)
-    all_ranges_model.updated.connect(committed_ranges_model.on_ranges_updated)
-    all_ranges_model.updated.connect(analyses_model.on_ranges_updated)
+    all_analyses_model.updated.connect(working_plot_view_model.on_all_analyses_updated)
+    all_analyses_model.updated.connect(committed_analyses_model.on_all_analyses_updated)
 
-    committed_analyses_model.updated.connect(final_plot_view_model.on_ranges_updated)
+    committed_analyses_model.updated.connect(final_plot_view_model.on_committed_analyses_updated)
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(main_window.on_ions_updated)
 
     analyses_view_model = viewmodels.AnalysesViewModel()
     analyses_view_model.updated.connect(main_window.on_analyses_viewmodel_updated)
-    all_analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
-    methods_model.updated.connect(analyses_view_model.on_methods_updated)
 
-    loaded_m2c_model.prime()
+    all_analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
+
+    methods_model.updated.connect(analyses_view_model.on_methods_updated)
+    methods_model.updated.connect(methods_view_model.on_methods_updated)
+    methods_model.updated.connect(main_window.on_methods_updated)
+
+    loaded_m2cs_model.prime()
     bin_size_model.prime()
     suggested_ions_model.prime()
     methods_model.prime()

@@ -97,7 +97,7 @@ class MethodsModel(QObject):
     def __init__(self):
         super(MethodsModel, self).__init__(None)
 
-        self._methods = ()
+        self._methods = {}
 
     def replace(self, new_methods):
         old_methods = self._methods
@@ -106,25 +106,8 @@ class MethodsModel(QObject):
 
         return old_methods
 
-    def _run_method_for_ion(self, method_name):
-        module = self._methods[method_name]
-
-        try:
-            method_to_call = getattr(module, method_name.lower())
-            required_inputs = module.required_inputs()
-            inputs = self._send_inputs(required_inputs)
-            start, end = method_to_call(inputs)
-            return Range(start, end)
-
-        except AttributeError:
-            print ('Function not found "%s"' % (method.name))
-
-    def _send_inputs(self, required_inputs):
-        if required_inputs == 'suggested_m2c':
-            inputs = 11
-        #
-        # {'suggested_m2c': from_analyses_model_get_m2c()}
-        return inputs
+    def prime(self):
+        self.updated.emit(self._methods)
 
 class CommittedAnalysesModel(QObject):
     updated = pyqtSignal(tuple)
@@ -136,7 +119,7 @@ class CommittedAnalysesModel(QObject):
         self._committedranges = ()
 
     @pyqtSlot(tuple)
-    def on_ranges_updated(self, new_ranges):
+    def on_all_analyses_updated(self, new_ranges):
         self._ranges = new_ranges
         set(self._committedranges).intersection_update(set(self._ranges))
         self.updated.emit(self._committedranges)
@@ -242,29 +225,29 @@ class AllAnalysesModel(QObject):
 
 
 class MetadataModel(QObject):
-    updated = pyqtSignal()
+    updated = pyqtSignal(tuple)
 
     def __init__(self):
         super(MetadataModel, self).__init__(None)
 
-        self._metadata = ()
+        self._metadata = ExperimentInfo(ID='Experiment ID',description='Description...')
 
     def replace_experiment_ID(self, new_experiment_ID):
         old_experiment_ID = self._metadata.ID
-        self._metadata.ID = new_experiment_ID
-        self.updated.emit(self._metadata) #Currently not updating anything - need for model at all?
+        self._metadata = self._metadata._replace(ID=new_experiment_ID)
+        self.updated.emit(self._metadata)
 
         return old_experiment_ID
 
     def replace_experiment_description(self, new_experiment_description):
         old_experiment_description = self._metadata.description
-        self._metadata.description = new_experiment_description
+        self._metadata = self._metadata._replace(description=new_experiment_description)
         self.updated.emit(self._metadata)
 
         return old_experiment_description
 
     def prime(self):
-        self._metadata = ExperimentInfo(ID='Experiment ID',description='Description...')
+        self.updated.emit(self._metadata)
 
 if __name__ == '__main__':
     unittest.main()
