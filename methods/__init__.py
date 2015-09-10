@@ -15,9 +15,4 @@ def load_all_methods_from_dir(dirname):
             module = importlib.import_module(full_path)
             modules.update({filename.title(): module})
 
-    modules=_add_manual_method(modules)
-    return modules
-
-def _add_manual_method(modules):
-    modules.update({'Manual': None})
     return modules

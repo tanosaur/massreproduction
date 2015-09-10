@@ -1,6 +1,6 @@
 from PyQt4.QtGui import QItemDelegate, QComboBox
 from PyQt4.QtCore import QObject, SIGNAL, SLOT, pyqtSignal, pyqtSlot
-from models import BinSizeRecord, Ion
+from models import BinSizeRecord, Ion, Range
 
 from collections import namedtuple
 
@@ -18,7 +18,7 @@ class MethodsViewModel(QObject):
             ion=None,
             methods={},
             m2cs=(),
-            bin_size=()
+            bin_size=BinSizeRecord(1, 0, 1),
             )
 
     @pyqtSlot(dict)
@@ -35,26 +35,21 @@ class MethodsViewModel(QObject):
 
     def run_method_for_ion(self, new_ion, method_name):
         self._record = self._record._replace(ion=new_ion)
-        module = self._methods[method_name]
+        module = self._record.methods[method_name]
 
-        try:
-            method_to_call = getattr(module, method_name.lower())
-            required_inputs = module.required_inputs()
-            inputs = self._send_inputs(required_inputs)
-            start, end = method_to_call(inputs) # TODO check for more than one input - unpack list or use pythonic for?
-            return Range(start, end)
-
-        except AttributeError:
-            print ('Function not found "%s"' % (method.name))
+        method_to_call = getattr(module, method_name.lower())
+        required_inputs = module.required_inputs()
+        inputs = self._send_inputs(required_inputs)
+        start, end = method_to_call(*inputs)
+        return Range(start, end)
 
     def _send_inputs(self, required_inputs):
         input_reference={
-            'suggested_m2cs': self._record.ion.mass_to_charge,
+            'suggested_m2c': self._record.ion.mass_to_charge,
             'abundance': self._record.ion.isotope.abundance,
             'bin_size': self._record.bin_size.value,
             'm2cs': self._record.m2cs,
         }
-
         inputs = []
 
         for _input in required_inputs:

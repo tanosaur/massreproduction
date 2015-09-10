@@ -150,6 +150,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         print("Change: %s : %s" % (ion, method_name))
 
         command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
+        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
@@ -212,13 +213,14 @@ if __name__ == '__main__':
     all_analyses_model = models.AllAnalysesModel()
     metadata_model = models.MetadataModel()
 
-    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_model, metadata_model)
-    working_frame = WorkingFrame(parent=main_window.workingFrame)
-    ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
     final_plot_view_model = viewmodels.FinalPlotViewModel()
     methods_view_model = viewmodels.MethodsViewModel()
+
+    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_view_model, metadata_model)
+    working_frame = WorkingFrame(parent=main_window.workingFrame)
+    ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
     final_plot_view_model.updated.connect(ranged_frame.on_updated)

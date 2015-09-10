@@ -67,10 +67,10 @@ class WorkingFrame(QMainWindow):
             #TODO adjust colors so colors are per element (sort by element..?)
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
+                print(start,end)
                 self.ax.axvspan(start, end, facecolor='g', alpha=0.5)
 
         self.canvas.draw()
-
 
     def on_span_select(self,x0,x1):
         self.ax.axvspan(x0,x1, facecolor='c', alpha=0.5)
