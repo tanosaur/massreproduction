@@ -178,10 +178,6 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.suggestButton.setFocus()
 
     @pyqtSlot()
-    def on_experimentIDLineEdit_selectionChanged(self):
-        self.experimentIDLineEdit.clear()
-
-    @pyqtSlot()
     def on_experimentIDLineEdit_editingFinished(self):
         experiment_ID = self.experimentIDLineEdit.text()
         command = commands.UpdateExperimentID(experiment_ID, metadata_model)
@@ -198,7 +194,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSlot(tuple)
     def on_metadata_updated(self, metadata):
         self.experimentIDLineEdit.setText(metadata.ID)
-        self.experimentdescriptionTextEdit.setText(metadata.description)
+        self.experimentdescriptionTextEdit.setPlainText(metadata.description)
 
 
 if __name__ == '__main__':
@@ -248,6 +244,8 @@ if __name__ == '__main__':
 
     methods_model.updated.connect(analyses_view_model.on_methods_updated)
     methods_model.updated.connect(methods_view_model.on_methods_updated)
+
+    metadata_model.updated.connect(main_window.on_metadata_updated)
 
     loaded_m2cs_model.prime()
     bin_size_model.prime()

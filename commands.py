@@ -1,4 +1,5 @@
 import json
+import os
 import aptread.aptload
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
@@ -30,7 +31,8 @@ class LoadPOS(QUndoCommand):
         return tuple(aptread.aptload.POSData(posfile).pos.mc.tolist())
 
     def _create_experiment_ID(self, posfile):
-        experiment_ID = posfile[:-4]
+        _ , tail = os.path.split(posfile)
+        experiment_ID = os.path.splitext(tail)[0]
         return experiment_ID
 
 class LoadEPOS(QUndoCommand):
