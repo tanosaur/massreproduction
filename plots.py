@@ -11,9 +11,7 @@ from matplotlib.backends import qt_compat
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.widgets import SpanSelector
 from matplotlib import rcParams
-
-from itertools import cycle
-
+import itertools
 from viewmodels import WorkingPlotRecord, FinalPlotRecord
 
 rcParams['keymap.save'] = u'super+s'
@@ -56,18 +54,22 @@ class WorkingFrame(QMainWindow):
         self.ax.set_yscale('log')
 
         if record.ions:
-            colors=cycle(list('rybmc'))
+            colors=itertools.cycle(list('rybmc'))
 
-            for ion in record.ions:
+            element_keyfunc = lambda x: x.isotope.element
+            sorted_ions = sorted(record.ions, key=element_keyfunc)
+
+            for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
                 line_color=next(colors)
-                self.ax.axvline(ion.mass_to_charge, color=line_color, picker=0.5)
-                self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
+
+                for ion in ions:
+                    self.ax.axvline(ion.mass_to_charge, color=line_color, picker=0.5)
+                    self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
 
         if record.all_analyses:
-            #TODO adjust colors so colors are per element (sort by element..?)
+        
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
-                print(start,end)
                 self.ax.axvspan(start, end, facecolor='g', alpha=0.5)
 
         self.canvas.draw()

@@ -191,7 +191,7 @@ class AllAnalysesModel(QObject):
             analyses_list.append(ion.name)
             analyses_list.append({
             'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
-            'Method': analysis.method.name,
+            'Method': analysis.method,
             'Range': [analysis.range.start, analysis.range.end],
             'Reason': analysis.reason})
         return analyses_list
@@ -213,10 +213,9 @@ class AllAnalysesModel(QObject):
                 start, end = entry.get('Range')
                 reason = entry.get('Reason')
 
-                method = Method(method_name, None)
                 _range = Range(start, end)
 
-                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method, _range, reason)})
+                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason)})
 
         return new_analyses
 
