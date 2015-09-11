@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty
-from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QStandardItem, QComboBox, QStyledItemDelegate, QLabel
+from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex
+from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel
 
 import sys
 import ui_mainwindow
@@ -137,6 +137,17 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         for row in range(0, qmodel.rowCount()):
             self.rangedTable.openPersistentEditor(qmodel.index(row, 1))
         self.rangedTable.setColumnWidth(1, 95)
+        # selectionmodel = QItemSelectionModel(qmodel)
+        # selectionmodel.selectionChanged.connect(self.on_selection_changed)
+    #     self.rangedTable.clicked.connect(self.on_rangedTable_clicked)
+    #
+    # @pyqtSlot(QModelIndex)
+    # def on_rangedTable_clicked(self, index):
+    #     print('clicked')
+
+    @pyqtSlot(QItemSelection, QItemSelection)
+    def on_selection_changed(self, selected, deselected):
+        print(selected)
 
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):

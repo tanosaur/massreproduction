@@ -1,4 +1,3 @@
-import numpy as np
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
 
@@ -67,10 +66,10 @@ class WorkingFrame(QMainWindow):
                     self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
 
         if record.all_analyses:
-        
+
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
-                self.ax.axvspan(start, end, facecolor='g', alpha=0.5)
+                self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
         self.canvas.draw()
 

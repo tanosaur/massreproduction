@@ -25,7 +25,7 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
         return '%s%s+%s' % (self.isotope.number, self.isotope.element, self.charge_state)
 
 Range = namedtuple('Range', 'start end')
-Analysis = namedtuple('Analysis', 'method range reason')
+Analysis = namedtuple('Analysis', 'method range reason color')
 BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
 ExperimentInfo = namedtuple('Experiment', 'ID description')
 
@@ -172,13 +172,6 @@ class AllAnalysesModel(QObject):
         self.updated.emit(self._analyses)
 
         return ion, old_analysis.method, old_analysis.range
-
-    def make_analyses_from_suggest(self, new_ions):
-        new_analyses = {}
-        for ion in new_ions:
-            new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None)})
-
-        return new_analyses
 
     def export_analyses_to_mrfile(self):
         analyses = self._to_json(self._analyses)
