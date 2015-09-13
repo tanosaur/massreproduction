@@ -1,0 +1,58 @@
+[
+  [
+    "Atom_blend_data_R04",
+    "Description..."
+  ],
+  "2H+1",
+  {
+    "Ion": [
+      "H",
+      2,
+      2.014,
+      0.015,
+      1
+    ],
+    "Range": [
+      2.014,
+      2.014
+    ],
+    "Reason": null,
+    "Method": "Dummy",
+    "Color": "g"
+  },
+  "53Cr+3",
+  {
+    "Ion": [
+      "Cr",
+      53,
+      52.94,
+      9.5,
+      3
+    ],
+    "Range": [
+      17.646666666666665,
+      17.646666666666665
+    ],
+    "Reason": null,
+    "Method": "Dummy",
+    "Color": null
+  },
+  "54Cr+2",
+  {
+    "Ion": [
+      "Cr",
+      54,
+      53.94,
+      2.4,
+      2
+    ],
+    "Range": [
+      26.97,
+      26.97
+    ],
+    "Reason": null,
+    "Method": "Dummy",
+    "Color": null
+  },
+  "2015-09-13 23:07:28.342149"
+]

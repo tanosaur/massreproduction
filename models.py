@@ -200,15 +200,18 @@ class AllAnalysesModel(QObject):
     def _from_json(self, contents):
         new_analyses = {}
         for entry in contents:
+            if isinstance(entry, list):
+                print(entry)
             if isinstance(entry, dict):
                 element, number, mass, abundance, charge_state = entry.get('Ion')
                 method_name = entry.get('Method')
                 start, end = entry.get('Range')
                 reason = entry.get('Reason')
+                color = entry.get('Color')
 
                 _range = Range(start, end)
 
-                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason)})
+                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason, color)})
 
         return new_analyses
 

@@ -1,13 +1,15 @@
 from PyQt4.QtGui import QItemDelegate, QComboBox
 from PyQt4.QtCore import QObject, SIGNAL, SLOT, pyqtSignal, pyqtSlot
 from models import BinSizeRecord, Ion, Range
-
+import json
+import datetime
 from collections import namedtuple
 
 FinalPlotRecord = namedtuple('FinalPlotRecord', 'm2cs bin_size committed_analyses')
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size all_analyses ions')
 MethodsRecord = namedtuple('MethodsRecord', 'ion methods m2cs bin_size')
 MRRecord = namedtuple('MRRecord', 'analyses metadata')
+
 
 class MethodsViewModel(QObject):
 
@@ -35,6 +37,7 @@ class MethodsViewModel(QObject):
 
     def run_method_for_ion(self, new_ion, method_name):
         self._record = self._record._replace(ion=new_ion)
+        print(self._record.methods)
         module = self._record.methods[method_name]
 
         method_to_call = getattr(module, method_name.lower())
@@ -59,6 +62,8 @@ class MethodsViewModel(QObject):
         return inputs
 
 class MRViewModel(QObject):
+    updated = pyqtSignal(MRRecord)
+
     def __init__(self):
         super(MRViewModel, self).__init__(None)
 
@@ -69,14 +74,41 @@ class MRViewModel(QObject):
 
     @pyqtSlot(tuple)
     def on_metadata_updated(self, new_metadata):
-        self._record = self.record._replace(metadata=new_metadata)
+        self._record = self._record._replace(metadata=new_metadata)
         self.updated.emit(self._record)
 
     @pyqtSlot(dict)
-    def on_analyses_updated(self, new_analyses):
+    def on_all_analyses_updated(self, new_analyses):
         self._record = self._record._replace(analyses=new_analyses)
         self.updated.emit(self._record)
 
+    def export_analyses_to_mrfile(self):
+        if self._record:
+            record = self._to_json(self._record)
+            with open('another.mr', mode='w', encoding='utf-8') as f:
+                json.dump(record, f, indent=2)
+
+    def _to_json(self, record):
+        analyses_list = []
+
+        analyses_list.append([
+            record.metadata.ID,
+            record.metadata.description
+            ])
+
+        for ion, analysis in record.analyses.items():
+            analyses_list.append(ion.name)
+            analyses_list.append({
+            'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
+            'Method': analysis.method,
+            'Range': [analysis.range.start, analysis.range.end],
+            'Reason': analysis.reason,
+            'Color': analysis.color,
+            })
+
+        analyses_list.append(str(datetime.datetime.today())) #ISO 8601 format
+
+        return analyses_list
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)

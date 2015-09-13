@@ -25,7 +25,7 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
-    def __init__(self, undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, parent=None):
+    def __init__(self, undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, mr_view_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
@@ -38,6 +38,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self._metadata_model = metadata_model
 
         self._methods_view_model = methods_view_model
+        self._mr_view_model = mr_view_model
 
         history_view = QUndoView(self._undo_stack, parent=self.stackView)
         history_view.setEmptyLabel('New program')
@@ -154,7 +155,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
-        command = commands.ExportAnalyses(self._analyses_model)
+        command = commands.ExportAnalyses(self._mr_view_model)
         self._undo_stack.push(command)
 
     @pyqtSlot()
@@ -183,12 +184,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         command = commands.UpdateExperimentID(experiment_ID, metadata_model)
 
     @pyqtSlot()
-    def on_experimentdescriptionTextEdit_selectionChanged(self):
-        self.experimentdescriptionTextEdit.clear()
-
-    @pyqtSlot()
-    def on_experimentdescriptionTextEdit_editingFinished(self):
-        experiment_description = self.experimentdescriptionTextEdit.text()
+    def on_experimentdescriptionTextEdit_textChanged(self):
+        experiment_description = self.experimentdescriptionTextEdit.document().toPlainText()
         command = commands.UpdateExperimentDescription(experiment_description, metadata_model)
 
     @pyqtSlot(tuple)
@@ -199,6 +196,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
 if __name__ == '__main__':
     app=QApplication(sys.argv)
+    print('Loading...')
+
     undo_stack = QUndoStack()
 
     loaded_m2cs_model = models.LoadedM2CModel()
@@ -213,8 +212,9 @@ if __name__ == '__main__':
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
     final_plot_view_model = viewmodels.FinalPlotViewModel()
     methods_view_model = viewmodels.MethodsViewModel()
+    mr_view_model = viewmodels.MRViewModel()
 
-    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_view_model, metadata_model)
+    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_view_model, metadata_model, mr_view_model)
     working_frame = WorkingFrame(parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
@@ -231,6 +231,7 @@ if __name__ == '__main__':
 
     all_analyses_model.updated.connect(working_plot_view_model.on_all_analyses_updated)
     all_analyses_model.updated.connect(committed_analyses_model.on_all_analyses_updated)
+    all_analyses_model.updated.connect(mr_view_model.on_all_analyses_updated)
 
     committed_analyses_model.updated.connect(final_plot_view_model.on_committed_analyses_updated)
 
@@ -246,6 +247,7 @@ if __name__ == '__main__':
     methods_model.updated.connect(methods_view_model.on_methods_updated)
 
     metadata_model.updated.connect(main_window.on_metadata_updated)
+    metadata_model.updated.connect(mr_view_model.on_metadata_updated)
 
     loaded_m2cs_model.prime()
     bin_size_model.prime()

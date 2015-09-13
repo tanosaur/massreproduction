@@ -211,7 +211,7 @@ class UpdateExperimentID(QUndoCommand):
 
 class UpdateExperimentDescription(QUndoCommand):
     def __init__(self, experiment_description, model):
-        super(UpdateExperimentID, self).__init__('Description: (%s)' %experiment_description)
+        super(UpdateExperimentDescription, self).__init__('Description: (%s)' %experiment_description)
 
         self._model = model
         self._experiment_description = experiment_description
