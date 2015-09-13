@@ -137,17 +137,6 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         for row in range(0, qmodel.rowCount()):
             self.rangedTable.openPersistentEditor(qmodel.index(row, 1))
         self.rangedTable.setColumnWidth(1, 95)
-        # selectionmodel = QItemSelectionModel(qmodel)
-        # selectionmodel.selectionChanged.connect(self.on_selection_changed)
-    #     self.rangedTable.clicked.connect(self.on_rangedTable_clicked)
-    #
-    # @pyqtSlot(QModelIndex)
-    # def on_rangedTable_clicked(self, index):
-    #     print('clicked')
-
-    @pyqtSlot(QItemSelection, QItemSelection)
-    def on_selection_changed(self, selected, deselected):
-        print(selected)
 
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):
