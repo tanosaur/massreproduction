@@ -7,7 +7,7 @@ from collections import namedtuple
 
 FinalPlotRecord = namedtuple('FinalPlotRecord', 'm2cs bin_size committed_analyses')
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size all_analyses ions')
-MethodsRecord = namedtuple('MethodsRecord', 'ion methods m2cs bin_size')
+MethodsRecord = namedtuple('MethodsRecord', 'methods m2cs bin_size')
 MRRecord = namedtuple('MRRecord', 'analyses metadata')
 
 
@@ -17,7 +17,6 @@ class MethodsViewModel(QObject):
         super(MethodsViewModel, self).__init__(None)
 
         self._record = MethodsRecord(
-            ion=None,
             methods={},
             m2cs=(),
             bin_size=BinSizeRecord(1, 0, 1),
@@ -36,20 +35,18 @@ class MethodsViewModel(QObject):
         self._record = self._record._replace(bin_size=new_bin_size)
 
     def run_method_for_ion(self, new_ion, method_name):
-        self._record = self._record._replace(ion=new_ion)
-        print(self._record.methods)
         module = self._record.methods[method_name]
-
         method_to_call = getattr(module, method_name.lower())
+
         required_inputs = module.required_inputs()
-        inputs = self._send_inputs(required_inputs)
+        inputs = self._send_inputs(required_inputs, new_ion)
         start, end = method_to_call(*inputs)
         return Range(start, end)
 
-    def _send_inputs(self, required_inputs):
+    def _send_inputs(self, required_inputs, ion):
         input_reference={
-            'suggested_m2c': self._record.ion.mass_to_charge,
-            'abundance': self._record.ion.isotope.abundance,
+            'suggested_m2c': ion.mass_to_charge,
+            'abundance': ion.isotope.abundance,
             'bin_size': self._record.bin_size.value,
             'm2cs': self._record.m2cs,
         }
@@ -120,7 +117,7 @@ class WorkingPlotViewModel(QObject):
             m2cs=(),
             bin_size=BinSizeRecord(1, 0, 1),
             all_analyses={},
-            ions=()
+            ions=(),
         )
 
     @pyqtSlot(tuple)

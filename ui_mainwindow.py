@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Sun Sep  6 23:11:42 2015
+# Created: Mon Sep 14 23:20:45 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -257,10 +257,10 @@ class Ui_MainWindow(object):
         self.addionsButton.setDefault(True)
         self.addionsButton.setObjectName(_fromUtf8("addionsButton"))
         self.verticalLayout_6.addWidget(self.addionsButton)
-        self.removeionsButton = QtGui.QPushButton(self.peakID_Tab)
-        self.removeionsButton.setEnabled(False)
-        self.removeionsButton.setObjectName(_fromUtf8("removeionsButton"))
-        self.verticalLayout_6.addWidget(self.removeionsButton)
+        self.clearionsButton = QtGui.QPushButton(self.peakID_Tab)
+        self.clearionsButton.setEnabled(False)
+        self.clearionsButton.setObjectName(_fromUtf8("clearionsButton"))
+        self.verticalLayout_6.addWidget(self.clearionsButton)
         self.horizontalLayout_3.addLayout(self.verticalLayout_6)
         self.verticalLayout_8.addLayout(self.horizontalLayout_3)
         self.gridLayout.addLayout(self.verticalLayout_8, 1, 1, 1, 1)
@@ -377,7 +377,7 @@ class Ui_MainWindow(object):
         self.maxchargestateLabel.setText(_translate("MainWindow", "Max charge state", None))
         self.suggestButton.setText(_translate("MainWindow", "Suggest", None))
         self.addionsButton.setText(_translate("MainWindow", "Add", None))
-        self.removeionsButton.setText(_translate("MainWindow", "Remove", None))
+        self.clearionsButton.setText(_translate("MainWindow", "Clear", None))
         self.tab_Tab.setTabText(self.tab_Tab.indexOf(self.peakID_Tab), _translate("MainWindow", "Peak ID", None))
         self.tab_Tab.setTabText(self.tab_Tab.indexOf(self.composition_Tab), _translate("MainWindow", "Composition", None))
         self.tab_Tab.setTabText(self.tab_Tab.indexOf(self.advanced_Tab), _translate("MainWindow", "Advanced", None))

@@ -503,12 +503,12 @@
                    </widget>
                   </item>
                   <item>
-                   <widget class="QPushButton" name="removeionsButton">
+                   <widget class="QPushButton" name="clearionsButton">
                     <property name="enabled">
                      <bool>false</bool>
                     </property>
                     <property name="text">
-                     <string>Remove</string>
+                     <string>Clear</string>
                     </property>
                    </widget>
                   </item>

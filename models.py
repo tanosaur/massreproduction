@@ -186,7 +186,9 @@ class AllAnalysesModel(QObject):
             'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
             'Method': analysis.method,
             'Range': [analysis.range.start, analysis.range.end],
-            'Reason': analysis.reason})
+            'Reason': analysis.reason,
+            'Color': analysis.color,
+            })
         return analyses_list
 
     def make_analyses_from_mrfile(self, mrfile):

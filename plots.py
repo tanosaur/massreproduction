@@ -69,7 +69,10 @@ class WorkingFrame(QMainWindow):
 
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
-                self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
+                if analysis.method == 'Manual':
+                    self.ax.axvline(ion.mass_to_charge, color='k', picker=0.5)
+                else:
+                    self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
         self.canvas.draw()
 
@@ -88,6 +91,7 @@ class WorkingFrame(QMainWindow):
 
     def on_pick(self, event):
         self._picked_object=event.artist
+        
 
 
 class RangedFrame(QMainWindow):

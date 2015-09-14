@@ -6,7 +6,6 @@ import itertools
 from PyQt4.QtGui import QUndoCommand, QUndoView
 from models import Isotope, ISOTOPES, Ion, Range, Analysis
 
-
 class LoadPOS(QUndoCommand):
     def __init__(self, posfile, m2c_model, metadata_model):
         super(LoadPOS, self).__init__('Load (%s)' %posfile)
@@ -120,7 +119,7 @@ class AddIonsToTable(QUndoCommand):
         self._model.replace(self._old_analyses)
 
     def _analyses_from_suggest(self, new_ions):
-        new_analyses = self._color_all_same(new_ions)
+        new_analyses = self._color_by_element(new_ions)
         return new_analyses
 
     def _color_all_same(self, new_ions):
@@ -135,12 +134,14 @@ class AddIonsToTable(QUndoCommand):
         new_analyses = {}
 
         #TODO check if element already in table, then show it the same color (default setting - test users as to what they like...)
-        colors = itertools.cycle(list('rybmgc'))
+        colors = itertools.cycle(list('byrgcm'))
         element_keyfunc = lambda x: x.isotope.element
         sorted_ions = sorted(new_ions, key=element_keyfunc)
 
         for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
             color = next(colors)
+            print(element)
+            print(color)
 
             for ion in ions:
                 new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
@@ -163,6 +164,7 @@ class MethodSelected(QUndoCommand):
         self._old_range = None
 
     def redo(self):
+
         self._new_range = self._methods_view_model.run_method_for_ion(self._ion, self._method_name)
         self._old_ion, self._old_method_name, self._old_range = self._analyses_model.update_method_for_ion(self._ion, self._method_name, self._new_range)
 
