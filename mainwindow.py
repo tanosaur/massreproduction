@@ -110,6 +110,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         command = commands.AddIonsToTable(ions, self._analyses_model)
         self._undo_stack.push(command)
 
+    @pyqtSlot()
+    def on_clearionsButton_clicked(self):
+        pass
+
     @pyqtSlot(dict)
     def on_analyses_viewmodel_updated(self, view_model):
         qmodel = QStandardItemModel()

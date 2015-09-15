@@ -9,11 +9,14 @@ from matplotlib.figure import Figure
 from matplotlib.backends import qt_compat
 from matplotlib.backend_bases import key_press_handler
 from matplotlib.widgets import SpanSelector
-from matplotlib import rcParams
+from matplotlib.lines import Line2D
+from matplotlib import rcParams, patheffects
 import itertools
 from viewmodels import WorkingPlotRecord, FinalPlotRecord
 
 rcParams['keymap.save'] = u'super+s'
+
+PICKER_SENSITIVITY = 1.2
 
 class WorkingFrame(QMainWindow):
 
@@ -38,8 +41,6 @@ class WorkingFrame(QMainWindow):
 
         self.ax = self.fig.add_subplot(111)
 
-        self._picked_object = None
-
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
 
@@ -62,15 +63,15 @@ class WorkingFrame(QMainWindow):
                 line_color=next(colors)
 
                 for ion in ions:
-                    self.ax.axvline(ion.mass_to_charge, color=line_color, picker=0.5)
-                    self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=0.3)
+                    self.ax.axvline(ion.mass_to_charge, color=line_color, picker=PICKER_SENSITIVITY)
+                    self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=PICKER_SENSITIVITY)
 
         if record.all_analyses:
 
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
                 if analysis.method == 'Manual':
-                    self.ax.axvline(ion.mass_to_charge, color='k', picker=0.5)
+                    self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY)
                 else:
                     self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
@@ -90,8 +91,11 @@ class WorkingFrame(QMainWindow):
             self.ss=SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True)
 
     def on_pick(self, event):
-        self._picked_object=event.artist
-        
+        if isinstance(event.artist, Line2D):
+            line=event.artist
+            self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            line.remove()
+            self.canvas.draw()
 
 
 class RangedFrame(QMainWindow):
