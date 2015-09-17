@@ -226,12 +226,12 @@ if __name__ == '__main__':
     final_plot_view_model.updated.connect(ranged_frame.on_updated)
     loaded_m2cs_model.updated.connect(working_plot_view_model.on_m2cs_updated)
     loaded_m2cs_model.updated.connect(final_plot_view_model.on_m2cs_updated)
-    loaded_m2cs_model.updated.connect(methods_view_model.on_methods_updated)
+    loaded_m2cs_model.updated.connect(methods_view_model.on_m2cs_updated)
 
     bin_size_model.updated.connect(main_window.on_bin_size_updated)
     bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
     bin_size_model.updated.connect(final_plot_view_model.on_bin_size_updated)
-    bin_size_model.updated.connect(methods_view_model.on_methods_updated)
+    bin_size_model.updated.connect(methods_view_model.on_bin_size_updated)
 
     all_analyses_model.updated.connect(working_plot_view_model.on_all_analyses_updated)
     all_analyses_model.updated.connect(committed_analyses_model.on_all_analyses_updated)

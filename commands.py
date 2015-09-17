@@ -181,8 +181,10 @@ class ExportAnalyses(QUndoCommand):
         self._model.export_analyses_to_mrfile()
 
 class LoadAnalyses(QUndoCommand):
+
     def __init__(self, filename, model):
-        super(LoadAnalyses, self).__init__('Load (%s)' %filename)
+        _ , tail = os.path.split(filename)
+        super(LoadAnalyses, self).__init__('Load %s' %tail)
 
         self._filename=filename
         self._model=model
