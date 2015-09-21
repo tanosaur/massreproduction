@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex
-from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel
+from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent
+from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent
 
 import sys
 import ui_mainwindow
@@ -70,6 +70,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
             self._suggested_ions_model
         )
         self._undo_stack.push(command)
+        self.clearionsButton.setEnabled(True)
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
@@ -112,7 +113,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot()
     def on_clearionsButton_clicked(self):
-        pass
+        self.ionlistTree.reset()
+        # TODO push through to model and decide action
 
     @pyqtSlot(dict)
     def on_analyses_viewmodel_updated(self, view_model):
@@ -212,14 +214,13 @@ if __name__ == '__main__':
     all_analyses_model = models.AllAnalysesModel()
     metadata_model = models.MetadataModel()
 
-
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
     final_plot_view_model = viewmodels.FinalPlotViewModel()
     methods_view_model = viewmodels.MethodsViewModel()
     mr_view_model = viewmodels.MRViewModel()
 
     main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_view_model, metadata_model, mr_view_model)
-    working_frame = WorkingFrame(parent=main_window.workingFrame)
+    working_frame = WorkingFrame(all_analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
     ranged_frame = RangedFrame(parent=main_window.rangedFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)

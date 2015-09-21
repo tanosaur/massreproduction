@@ -164,14 +164,22 @@ class AllAnalysesModel(QObject):
         self._analyses = new_analyses
         self.updated.emit(self._analyses)
 
-    def update_method_for_ion(self, ion, method_name, _range):
+    def update_method_for_ion(self, ion, method, _range):
         old_analysis = self._analyses[ion]
         self._analyses[ion] = old_analysis._replace(
-            method=method_name,
+            method=method,
             range=_range)
         self.updated.emit(self._analyses)
 
         return ion, old_analysis.method, old_analysis.range
+
+    def update_manual_range_for_ion(self, ion, _range):
+        old_analysis = self._analyses[ion]
+        self._analyses[ion] = old_analysis._replace(
+            range=_range)
+        self.updated.emit(self._analyses)
+
+        return ion, old_analysis.range
 
     def export_analyses_to_mrfile(self):
         analyses = self._to_json(self._analyses)

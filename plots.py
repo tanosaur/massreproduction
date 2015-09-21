@@ -12,6 +12,8 @@ from matplotlib.widgets import SpanSelector
 from matplotlib.lines import Line2D
 from matplotlib import rcParams, patheffects
 import itertools
+
+import commands
 from viewmodels import WorkingPlotRecord, FinalPlotRecord
 
 rcParams['keymap.save'] = u'super+s'
@@ -20,7 +22,7 @@ PICKER_SENSITIVITY = 1.2
 
 class WorkingFrame(QMainWindow):
 
-    def __init__(self, parent=None):
+    def __init__(self, analyses_model, methods_view_model, undo_stack, parent=None):
         super(WorkingFrame, self).__init__(parent)
 
         self.fig=Figure()
@@ -41,6 +43,13 @@ class WorkingFrame(QMainWindow):
 
         self.ax = self.fig.add_subplot(111)
 
+        self._ions_for_lines = {}
+        self._picked_ion = None
+
+        self._analyses_model = analyses_model
+        self._methods_view_model = methods_view_model
+        self._undo_stack = undo_stack
+
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
 
@@ -52,6 +61,8 @@ class WorkingFrame(QMainWindow):
             self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
 
         self.ax.set_yscale('log')
+        self.ax.set_xlabel('Da')
+        self.ax.set_ylabel('Counts')
 
         if record.ions:
             colors=itertools.cycle(list('rybmc'))
@@ -63,39 +74,56 @@ class WorkingFrame(QMainWindow):
                 line_color=next(colors)
 
                 for ion in ions:
-                    self.ax.axvline(ion.mass_to_charge, color=line_color, picker=PICKER_SENSITIVITY)
+                    line = self.ax.axvline(ion.mass_to_charge, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
+                    self._ions_for_lines[line] = ion
                     self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=PICKER_SENSITIVITY)
 
         if record.all_analyses:
 
             for ion, analysis in record.all_analyses.items():
                 start, end = analysis.range
-                if analysis.method == 'Manual':
-                    self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY)
+                if start == end: #TODO make safer than this
+                    line = self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
+                    self._ions_for_lines[line] = ion
                 else:
                     self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
         self.canvas.draw()
 
-    def on_span_select(self,x0,x1):
-        self.ax.axvspan(x0,x1, facecolor='c', alpha=0.5)
-        print(x0,x1)
-
     def on_key_press(self, event):
-        print('You pressed %s' % (event.key))
-        # implement the default mpl key press events described at
-        # http://matplotlib.org/users/navigation_toolbar.html#navigation-keyboard-shortcuts
-        key_press_handler(event, self.canvas, self.mpl_toolbar)
 
+        if event.key == 'a':
+            command = commands.AddIonsToTable([self._picked_ion], self._analyses_model)
+            self._undo_stack.push(command)
+        if event.key == 'm':
+            pass
         if event.key == 's':
-            self.ss=SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True)
+            command = commands.MethodSelected(self._picked_ion, 'Manual', self._analyses_model, self._methods_view_model)
+            self._undo_stack.push(command)
+            self._span_selector = SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, useblit=True)
+            QApplication.setOverrideCursor(QCursor(Qt.IBeamCursor))
+        if event.key == 'c':
+            self._update_manual_range_for_ion(self._current_span)
+            self._span_selector = None
+            QApplication.restoreOverrideCursor()
 
     def on_pick(self, event):
         if isinstance(event.artist, Line2D):
             line=event.artist
+            ion = self._ions_for_lines[line]
             self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            self._picked_ion = ion
             line.remove()
             self.canvas.draw()
+
+    def on_span_select(self,x0,x1):
+        self._current_span = (x0, x1)
+
+    def _update_manual_range_for_ion(self, current_span):
+        start, end = current_span
+        _picked_ion = self._picked_ion
+        command = commands.ManualRangeUpdated(self._analyses_model, _picked_ion, start, end)
+        self._undo_stack.push(command)
 
 
 class RangedFrame(QMainWindow):

@@ -140,8 +140,6 @@ class AddIonsToTable(QUndoCommand):
 
         for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
             color = next(colors)
-            print(element)
-            print(color)
 
             for ion in ions:
                 new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
@@ -149,27 +147,27 @@ class AddIonsToTable(QUndoCommand):
         return new_analyses
 
 class MethodSelected(QUndoCommand):
-    def __init__(self, ion, method_name, analyses_model, methods_model):
-        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method_name))
+    def __init__(self, ion, method, analyses_model, methods_view_model):
+        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))
 
         self._analyses_model = analyses_model
-        self._methods_view_model = methods_model
+        self._methods_view_model = methods_view_model
 
         self._ion = ion
-        self._method_name = method_name
+        self._method = method
         self._new_range = None
 
         self._old_ion = None
-        self._old_method_name = None
+        self._old_method = None
         self._old_range = None
 
     def redo(self):
 
-        self._new_range = self._methods_view_model.run_method_for_ion(self._ion, self._method_name)
-        self._old_ion, self._old_method_name, self._old_range = self._analyses_model.update_method_for_ion(self._ion, self._method_name, self._new_range)
+        self._new_range = self._methods_view_model.run_method_for_ion(self._ion, self._method)
+        self._old_ion, self._old_method, self._old_range = self._analyses_model.update_method_for_ion(self._ion, self._method, self._new_range)
 
     def undo(self):
-        self._analyses_model.update_method_for_ion(self._old_ion, self._old_method_name, self._old_range)
+        self._analyses_model.update_method_for_ion(self._old_ion, self._old_method, self._old_range)
 
 class ExportAnalyses(QUndoCommand):
     def __init__(self, model):
@@ -227,3 +225,20 @@ class UpdateExperimentDescription(QUndoCommand):
 
     def undo(self):
         self._model.replace(self._old_experiment_description)
+
+class ManualRangeUpdated(QUndoCommand):
+    def __init__(self, model, ion, start, end):
+        super(ManualRangeUpdated, self).__init__('{0}: ({1}, {2})'.format(ion.name, round(start,2), round(end,2)))
+
+        self._model = model
+        self._new_ion = ion
+        self._new_range = Range(start, end)
+
+        self._old_ion = None
+        self._old_range = None
+
+    def redo(self):
+        self._old_ion, self._old_range = self._model.update_manual_range_for_ion(self._new_ion, self._new_range)
+
+    def undo(self):
+        self._model.update_manual_range_for_ion(self._old_ion, self._old_range)
