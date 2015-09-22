@@ -56,8 +56,8 @@ class BinSizeModel(QObject):
 
         self._record = BinSizeRecord(
             maximum = 9000,
-            minimum = 0,
-            value = 1000
+            minimum = 10,
+            value = 2000
         )
 
     def replace_value(self, new_value): #TODO throw exception for new_bin_size > max, < min
@@ -106,49 +106,11 @@ class MethodsModel(QObject):
     def prime(self):
         self.updated.emit(self._methods)
 
-class CommittedAnalysesModel(QObject):
-    updated = pyqtSignal(tuple)
-
-    def __init__(self):
-        super(CommittedAnalysesModel, self).__init__(None)
-
-        self._ranges=()
-        self._committedranges = ()
-
-    @pyqtSlot(tuple)
-    def on_all_analyses_updated(self, new_ranges):
-        self._ranges = new_ranges
-        set(self._committedranges).intersection_update(set(self._ranges))
-        self.updated.emit(self._committedranges)
-
-    def commit(self, new_committedranges):
-        self._committedranges = new_committedranges
-        self.updated.emit(self._committedranges)
-
-# range_a = Range()
-# range_b = Range()
-# range_c = Range()
-#
-# model = CommittedAnalysesModel()
-# model.on_ranges_updated((range_a, range_b))
-# model.commit((range_a,))
-#
-# # NOW emit will emit updated, with (range_a, )
-#
-# model.on_ranges_updated((range_a, range_b, range_c))
-# model.commit((range_a, range_c))
-#
-# # NOW emit will emit updated, with (range_a, range_c)
-#
-# model.on_ranges_updated((range_b, range_c))
-#
-# # NOW emit will emit updated, with (range_c)
-
-class AllAnalysesModel(QObject):
+class AnalysesModel(QObject):
     updated = pyqtSignal(dict)
 
     def __init__(self):
-        super(AllAnalysesModel, self).__init__(None)
+        super(AnalysesModel, self).__init__(None)
 
         self._analyses = {}
 

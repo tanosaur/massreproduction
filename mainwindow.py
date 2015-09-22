@@ -1,66 +1,36 @@
 from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent
-from PyQt4.QtGui import QMainWindow, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent
+from PyQt4.QtGui import QMainWindow, QDialog, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent
 
 import sys
 import ui_mainwindow
-from plots import WorkingFrame, RangedFrame
+import ui_toolsdialog
+import ui_exporterrordialog
+from plots import WorkingFrame
 import viewmodels
 import commands
 import models
 import itertools
 from methods import load_all_methods_from_dir
 
-class MethodsComboDelegate(QStyledItemDelegate):
-    def __init__(self, methods, parent):
-        super(MethodsComboDelegate, self).__init__(parent)
+class ExportErrorDialog(QDialog, ui_exporterrordialog.Ui_ExportErrorDialog):
+    def __init__(self, parent=None):
+        super(ExportErrorDialog, self).__init__(parent)
+        self.setupUi(self)
 
-        self._methods = methods
-
-    def createEditor(self, parent, option, index):
-        combo = QComboBox(parent)
-        methods = list(self._methods.keys())
-        combo.addItems(methods)
-        combo.setCurrentIndex(methods.index(index.data()))
-        return combo
-
-class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
-
-    def __init__(self, undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, analyses_model, methods_view_model, metadata_model, mr_view_model, parent=None):
-        super(MainWindow, self).__init__(parent)
+class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
+    def __init__(self, undo_stack, suggested_ions_model, analyses_model, parent=None):
+        super(ToolsDialog, self).__init__(parent)
         self.setupUi(self)
 
         self._undo_stack = undo_stack
-        self._loaded_m2cs_model = loaded_m2cs_model
-        self._bin_size_model = bin_size_model
+
         self._suggested_ions_model = suggested_ions_model
         self._analyses_model = analyses_model
-        self._methods_model = methods_model
-        self._metadata_model = metadata_model
 
-        self._methods_view_model = methods_view_model
-        self._mr_view_model = mr_view_model
+        self._qmodel=None
 
         history_view = QUndoView(self._undo_stack, parent=self.stackView)
         history_view.setEmptyLabel('New program')
-        self.suggestmodel=None
-
-    @pyqtSlot(models.BinSizeRecord)
-    def on_bin_size_updated(self, bin_size):
-        self.binsizeSpinBox.setMaximum(bin_size.maximum)
-        self.binsizeSpinBox.setMinimum(bin_size.minimum)
-        self.binsizeSpinBox.setValue(bin_size.value)
-
-    @pyqtSlot()
-    def on_actionLoad_triggered(self):
-        pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
-        if pos_filename:
-            command = commands.LoadPOS(pos_filename, self._loaded_m2cs_model, self._metadata_model)
-            self._undo_stack.push(command)
-
-    @pyqtSlot(int)
-    def on_binsizeSpinBox_valueChanged(self, bin_size_value):
-        command = commands.BinSizeValueChange(bin_size_value, self._bin_size_model)
-        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_suggestButton_clicked(self):
@@ -71,6 +41,24 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         )
         self._undo_stack.push(command)
         self.clearionsButton.setEnabled(True)
+
+    @pyqtSlot()
+    def on_addionsButton_clicked(self):
+        qmodel_indices=self.ionlistTree.selectedIndexes()
+        # TODO fix so filter not needed, otherwise, leave comment explanation
+        ions=list(filter(None,[self._qmodel.data(index,32) for index in qmodel_indices]))
+        command = commands.AddIonsToTable(ions, self._analyses_model)
+        self._undo_stack.push(command)
+
+    @pyqtSlot()
+    def on_clearionsButton_clicked(self):
+        self.ionlistTree.reset()
+        # TODO push through to model and decide action
+
+    @pyqtSlot(str)
+    def on_maxchargestateLineEdit_textEdited(self):
+        self.suggestButton.setEnabled(True)
+        self.suggestButton.setFocus()
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
@@ -101,20 +89,59 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         self.ionlistTree.expandAll()
         self.addionsButton.setEnabled(True)
         self.addionsButton.setFocus()
-        self.suggestmodel=qmodel
+        self._qmodel=qmodel
+
+
+class MethodsComboDelegate(QStyledItemDelegate):
+    def __init__(self, methods, parent):
+        super(MethodsComboDelegate, self).__init__(parent)
+
+        self._methods = methods
+
+    def createEditor(self, parent, option, index):
+        combo = QComboBox(parent)
+        methods = list(self._methods.keys())
+        combo.addItems(methods)
+        combo.setCurrentIndex(methods.index(index.data()))
+        return combo
+
+
+class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
+
+    def __init__(self, tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, mr_view_model, parent=None):
+        super(MainWindow, self).__init__(parent)
+        self.setupUi(self)
+
+        self._tools_dialog = tools_dialog
+        self._export_error_dialog = export_error_dialog
+
+        self._undo_stack = undo_stack
+        self._loaded_m2cs_model = loaded_m2cs_model
+        self._bin_size_model = bin_size_model
+        self._analyses_model = analyses_model
+        self._methods_model = methods_model
+        self._metadata_model = metadata_model
+
+        self._methods_view_model = methods_view_model
+        self._mr_view_model = mr_view_model
+
+    @pyqtSlot(models.BinSizeRecord)
+    def on_bin_size_updated(self, bin_size):
+        self.binsizeSlider.setMaximum(bin_size.maximum)
+        self.binsizeSlider.setMinimum(bin_size.minimum)
+        self.binsizeSlider.setValue(bin_size.value)
 
     @pyqtSlot()
-    def on_addionsButton_clicked(self):
-        qmodel_indices=self.ionlistTree.selectedIndexes()
-        # TODO fix so filter not needed, otherwise, leave comment explanation
-        ions=list(filter(None,[self.suggestmodel.data(index,32) for index in qmodel_indices]))
-        command = commands.AddIonsToTable(ions, self._analyses_model)
+    def on_actionLoad_triggered(self):
+        pos_filename=QFileDialog.getOpenFileName(self,"Open .pos file",'', 'POS (*.pos)')
+        if pos_filename:
+            command = commands.LoadPOS(pos_filename, self._loaded_m2cs_model, self._metadata_model)
+            self._undo_stack.push(command)
+
+    @pyqtSlot(int)
+    def on_binsizeSlider_sliderMoved(self, bin_size_value):
+        command = commands.BinSizeValueChange(bin_size_value, self._bin_size_model)
         self._undo_stack.push(command)
-
-    @pyqtSlot()
-    def on_clearionsButton_clicked(self):
-        self.ionlistTree.reset()
-        # TODO push through to model and decide action
 
     @pyqtSlot(dict)
     def on_analyses_viewmodel_updated(self, view_model):
@@ -148,25 +175,38 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):
         index = item.index()
+        print(index.data())
         ion_index = index.sibling(index.row(), 0)
         method_index = index.sibling(index.row(), 1)
+        start_index = index.sibling(index.row(), 2)
+        end_index = index.sibling(index.row(), 3)
+        reason_index = index.sibling(index.row(), 4)
 
         ion = ion_index.data(Qt.UserRole)
         method_name = method_index.data(Qt.DisplayRole)
+        start = start_index.data(Qt.DisplayRole)
+        end = end_index.data(Qt.DisplayRole)
+        reason = reason_index.data(Qt.DisplayRole)
 
-        print("Change: %s : %s" % (ion, method_name))
+        print("Change: %s: %s (%s, %s) [%s]" % (ion.name, method_name, start, end, reason))
 
         command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
         self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
-        command = commands.ExportAnalyses(self._mr_view_model)
+        mr_filename=QFileDialog.getSaveFileName(self, 'Save MR file as','','JSON (*.json)')
+        command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
         self._undo_stack.push(command)
 
     @pyqtSlot()
+    def on_export_error(self):
+        error_dialog = self._export_error_dialog.exec_()
+        QApplication.beep()
+
+    @pyqtSlot()
     def on_action_LoadMR_triggered(self):
-        mr_filename=QFileDialog.getOpenFileName(self,"Open .mr file",'', 'MR (*.mr)')
+        mr_filename=QFileDialog.getOpenFileName(self,"Open MR file",'', 'JSON (*.json)')
         if mr_filename:
             command = commands.LoadAnalyses(mr_filename, self._analyses_model)
             self._undo_stack.push(command)
@@ -179,10 +219,9 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     def on_actionRedo_triggered(self):
         self._undo_stack.redo()
 
-    @pyqtSlot(str)
-    def on_maxchargestateLineEdit_textEdited(self):
-        self.suggestButton.setEnabled(True)
-        self.suggestButton.setFocus()
+    @pyqtSlot()
+    def on_actionTools_triggered(self):
+        self._tools_dialog.show()
 
     @pyqtSlot()
     def on_experimentIDLineEdit_editingFinished(self):
@@ -190,69 +229,64 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
         command = commands.UpdateExperimentID(experiment_ID, metadata_model)
 
     @pyqtSlot()
-    def on_experimentdescriptionTextEdit_textChanged(self):
-        experiment_description = self.experimentdescriptionTextEdit.document().toPlainText()
+    def on_experimentdescriptionLineEdit_editingFinished(self):
+        experiment_description = self.experimentdescriptionLineEdit.text()
         command = commands.UpdateExperimentDescription(experiment_description, metadata_model)
 
     @pyqtSlot(tuple)
     def on_metadata_updated(self, metadata):
         self.experimentIDLineEdit.setText(metadata.ID)
-        self.experimentdescriptionTextEdit.setPlainText(metadata.description)
+        self.experimentdescriptionLineEdit.setText(metadata.description)
 
 
 if __name__ == '__main__':
     app=QApplication(sys.argv)
-    print('Loading...')
+    print('Loading MassRep...')
 
     undo_stack = QUndoStack()
 
     loaded_m2cs_model = models.LoadedM2CModel()
     bin_size_model = models.BinSizeModel()
     suggested_ions_model = models.SuggestedIonsModel()
-    committed_analyses_model = models.CommittedAnalysesModel()
     methods_model = models.MethodsModel()
-    all_analyses_model = models.AllAnalysesModel()
+    analyses_model = models.AnalysesModel()
     metadata_model = models.MetadataModel()
 
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
-    final_plot_view_model = viewmodels.FinalPlotViewModel()
     methods_view_model = viewmodels.MethodsViewModel()
     mr_view_model = viewmodels.MRViewModel()
 
-    main_window = MainWindow(undo_stack, loaded_m2cs_model, bin_size_model, suggested_ions_model, all_analyses_model, methods_view_model, metadata_model, mr_view_model)
-    working_frame = WorkingFrame(all_analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
-    ranged_frame = RangedFrame(parent=main_window.rangedFrame)
+    tools_dialog = ToolsDialog(undo_stack, suggested_ions_model, analyses_model)
+    export_error_dialog = ExportErrorDialog()
+    main_window = MainWindow(tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, mr_view_model)
+    working_frame = WorkingFrame(analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
-    final_plot_view_model.updated.connect(ranged_frame.on_updated)
     loaded_m2cs_model.updated.connect(working_plot_view_model.on_m2cs_updated)
-    loaded_m2cs_model.updated.connect(final_plot_view_model.on_m2cs_updated)
     loaded_m2cs_model.updated.connect(methods_view_model.on_m2cs_updated)
 
     bin_size_model.updated.connect(main_window.on_bin_size_updated)
     bin_size_model.updated.connect(working_plot_view_model.on_bin_size_updated)
-    bin_size_model.updated.connect(final_plot_view_model.on_bin_size_updated)
     bin_size_model.updated.connect(methods_view_model.on_bin_size_updated)
 
-    all_analyses_model.updated.connect(working_plot_view_model.on_all_analyses_updated)
-    all_analyses_model.updated.connect(committed_analyses_model.on_all_analyses_updated)
-    all_analyses_model.updated.connect(mr_view_model.on_all_analyses_updated)
-
-    committed_analyses_model.updated.connect(final_plot_view_model.on_committed_analyses_updated)
+    analyses_model.updated.connect(working_plot_view_model.on_analyses_updated)
+    analyses_model.updated.connect(mr_view_model.on_analyses_updated)
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
-    suggested_ions_model.updated.connect(main_window.on_ions_updated)
+    suggested_ions_model.updated.connect(tools_dialog.on_ions_updated)
 
     analyses_view_model = viewmodels.AnalysesViewModel()
     analyses_view_model.updated.connect(main_window.on_analyses_viewmodel_updated)
 
-    all_analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
+    analyses_model.updated.connect(analyses_view_model.on_analyses_updated)
 
     methods_model.updated.connect(analyses_view_model.on_methods_updated)
     methods_model.updated.connect(methods_view_model.on_methods_updated)
 
     metadata_model.updated.connect(main_window.on_metadata_updated)
     metadata_model.updated.connect(mr_view_model.on_metadata_updated)
+
+    mr_view_model.export_error.connect(main_window.on_export_error)
 
     loaded_m2cs_model.prime()
     bin_size_model.prime()

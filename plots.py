@@ -14,9 +14,7 @@ from matplotlib import rcParams, patheffects
 import itertools
 
 import commands
-from viewmodels import WorkingPlotRecord, FinalPlotRecord
-
-rcParams['keymap.save'] = u'super+s'
+from viewmodels import WorkingPlotRecord
 
 PICKER_SENSITIVITY = 1.2
 
@@ -78,9 +76,9 @@ class WorkingFrame(QMainWindow):
                     self._ions_for_lines[line] = ion
                     self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=PICKER_SENSITIVITY)
 
-        if record.all_analyses:
+        if record.analyses:
 
-            for ion, analysis in record.all_analyses.items():
+            for ion, analysis in record.analyses.items():
                 start, end = analysis.range
                 if start == end: #TODO make safer than this
                     line = self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
@@ -91,6 +89,7 @@ class WorkingFrame(QMainWindow):
         self.canvas.draw()
 
     def on_key_press(self, event):
+        key_press_handler(event, self.canvas, self.mpl_toolbar)
 
         if event.key == 'a':
             command = commands.AddIonsToTable([self._picked_ion], self._analyses_model)
@@ -124,40 +123,3 @@ class WorkingFrame(QMainWindow):
         _picked_ion = self._picked_ion
         command = commands.ManualRangeUpdated(self._analyses_model, _picked_ion, start, end)
         self._undo_stack.push(command)
-
-
-class RangedFrame(QMainWindow):
-
-    def __init__(self, parent=None):
-
-        super(RangedFrame, self).__init__(parent)
-
-        self.fig=Figure()
-        self.canvas = FigureCanvas(self.fig)
-        self.canvas.setParent(parent)
-
-        vbox = QVBoxLayout()
-        vbox.addWidget(self.canvas)  # the matplotlib canvas
-        parent.setLayout(vbox)
-
-        self.ax=self.fig.add_subplot(111)
-
-    @pyqtSlot(FinalPlotRecord)
-    def on_updated(self, record):
-
-        self.ax.cla()
-
-        self.lines = 0
-
-        if record.m2cs:
-            self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
-
-        if record.committed_analyses:
-            #TODO adjust colors so colors are per element (sort by element..?)
-            for ion, analysis in record.committed_analyses.items():
-                start, end = analysis.range
-                self.ax.axvspan(start, end, ymin=0, facecolor='g', alpha=0.5)
-
-
-        self.ax.set_yscale('log')
-        self.canvas.draw()

@@ -5,8 +5,7 @@ import json
 import datetime
 from collections import namedtuple
 
-FinalPlotRecord = namedtuple('FinalPlotRecord', 'm2cs bin_size committed_analyses')
-WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size all_analyses ions')
+WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size analyses ions')
 MethodsRecord = namedtuple('MethodsRecord', 'methods m2cs bin_size')
 MRRecord = namedtuple('MRRecord', 'analyses metadata')
 
@@ -59,7 +58,7 @@ class MethodsViewModel(QObject):
         return inputs
 
 class MRViewModel(QObject):
-    updated = pyqtSignal(MRRecord)
+    export_error = pyqtSignal()
 
     def __init__(self):
         super(MRViewModel, self).__init__(None)
@@ -72,18 +71,25 @@ class MRViewModel(QObject):
     @pyqtSlot(tuple)
     def on_metadata_updated(self, new_metadata):
         self._record = self._record._replace(metadata=new_metadata)
-        self.updated.emit(self._record)
 
     @pyqtSlot(dict)
-    def on_all_analyses_updated(self, new_analyses):
+    def on_analyses_updated(self, new_analyses):
         self._record = self._record._replace(analyses=new_analyses)
-        self.updated.emit(self._record)
 
-    def export_analyses_to_mrfile(self):
+    def check_manual_analyses_have_reasons(self):
+        for ion, analysis in self._record.analyses.items():
+            if analysis.method == 'Manual' and analysis.reason == None:
+                self.export_error.emit()
+                return False
+
+        return True
+
+    def export_analyses_to_mrfile(self, filename):
         if self._record:
-            record = self._to_json(self._record)
-            with open('another.mr', mode='w', encoding='utf-8') as f:
-                json.dump(record, f, indent=2)
+            if self.check_manual_analyses_have_reasons():
+                record = self._to_json(self._record)
+                with open(filename, mode='w', encoding='utf-8') as f:
+                    json.dump(record, f, indent=2)
 
     def _to_json(self, record):
         analyses_list = []
@@ -116,7 +122,7 @@ class WorkingPlotViewModel(QObject):
         self._record = WorkingPlotRecord(
             m2cs=(),
             bin_size=BinSizeRecord(1, 0, 1),
-            all_analyses={},
+            analyses={},
             ions=(),
         )
 
@@ -131,40 +137,13 @@ class WorkingPlotViewModel(QObject):
         self.updated.emit(self._record)
 
     @pyqtSlot(tuple)
-    def on_all_analyses_updated(self, new_analyses):
-        self._record = self._record._replace(all_analyses=new_analyses)
+    def on_analyses_updated(self, new_analyses):
+        self._record = self._record._replace(analyses=new_analyses)
         self.updated.emit(self._record)
 
     @pyqtSlot(tuple)
     def on_ions_updated(self, new_ions):
         self._record = self._record._replace(ions=new_ions)
-        self.updated.emit(self._record)
-
-class FinalPlotViewModel(QObject):
-    updated = pyqtSignal(FinalPlotRecord)
-
-    def __init__(self):
-        super(FinalPlotViewModel, self).__init__(None)
-
-        self._record = FinalPlotRecord(
-            m2cs=(),
-            bin_size=BinSizeRecord(1, 0, 1),
-            committed_analyses={},
-        )
-
-    @pyqtSlot(tuple)
-    def on_m2cs_updated(self, new_m2cs):
-        self._record = self._record._replace(m2cs=new_m2cs)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(BinSizeRecord)
-    def on_bin_size_updated(self, new_bin_size):
-        self._record = self._record._replace(bin_size=new_bin_size)
-        self.updated.emit(self._record)
-
-    @pyqtSlot(tuple)
-    def on_committed_analyses_updated(self, new_analyses):
-        self._record = self._record._replace(committed_analyses=new_analyses)
         self.updated.emit(self._record)
 
 AnalysesRecord = namedtuple('AnalysesRecord', 'analyses methods')

@@ -170,13 +170,17 @@ class MethodSelected(QUndoCommand):
         self._analyses_model.update_method_for_ion(self._old_ion, self._old_method, self._old_range)
 
 class ExportAnalyses(QUndoCommand):
-    def __init__(self, model):
-        super(ExportAnalyses, self).__init__('Export analyses')
+    def __init__(self, filename, model):
+        super(ExportAnalyses, self).__init__('Export as {0}'.format(filename))
 
-        self._model=model
+        self._model = model
+        self._filename = filename
 
     def redo(self):
-        self._model.export_analyses_to_mrfile()
+        self._model.export_analyses_to_mrfile(self._filename)
+
+    def undo(self):
+        pass
 
 class LoadAnalyses(QUndoCommand):
 
