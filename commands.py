@@ -146,6 +146,22 @@ class AddIonsToTable(QUndoCommand):
 
         return new_analyses
 
+
+
+class AnalysesUpdated():
+    def __init__(self, ion, method, start, end, reason):
+        super(AnalysesUpdated, self).__init__(None)
+
+
+    def _update_method(self):
+
+    def _run_method(self):
+
+    def _update_range(self):
+
+    def _update_reason(self):
+
+
 class MethodSelected(QUndoCommand):
     def __init__(self, ion, method, analyses_model, methods_view_model):
         super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))

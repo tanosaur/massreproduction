@@ -56,6 +56,7 @@ class MethodsViewModel(QObject):
                 inputs.append(input_reference[_input])
 
         return inputs
+        
 
 class MRViewModel(QObject):
     export_error = pyqtSignal()

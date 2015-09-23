@@ -1,0 +1,24 @@
+[
+  [
+    "Experiment ID",
+    "Description..."
+  ],
+  "27Al+2",
+  {
+    "Method": "Dummy",
+    "Reason": null,
+    "Color": "b",
+    "Ion": [
+      "Al",
+      27,
+      26.98,
+      100,
+      2
+    ],
+    "Range": [
+      13.14,
+      13.84
+    ]
+  },
+  "2015-09-23 16:55:41.111079"
+]

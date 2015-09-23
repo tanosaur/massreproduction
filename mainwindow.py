@@ -1,4 +1,4 @@
-from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent
+from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent, QObject
 from PyQt4.QtGui import QMainWindow, QDialog, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent
 
 import sys
@@ -175,27 +175,45 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):
         index = item.index()
-        print(index.data())
         ion_index = index.sibling(index.row(), 0)
-        method_index = index.sibling(index.row(), 1)
-        start_index = index.sibling(index.row(), 2)
-        end_index = index.sibling(index.row(), 3)
-        reason_index = index.sibling(index.row(), 4)
-
         ion = ion_index.data(Qt.UserRole)
-        method_name = method_index.data(Qt.DisplayRole)
-        start = start_index.data(Qt.DisplayRole)
-        end = end_index.data(Qt.DisplayRole)
-        reason = reason_index.data(Qt.DisplayRole)
 
-        print("Change: %s: %s (%s, %s) [%s]" % (ion.name, method_name, start, end, reason))
+        if item.column() == 1:
+            method_index = index.sibling(index.row(), 1)
+            method_name = method_index.data(Qt.DisplayRole)
 
-        command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
-        self._undo_stack.push(command)
+            command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
+            self._undo_stack.push(command)
+
+            print("Change: %s: %s" % (ion.name, method_name))
+
+        elif item.column() == 2 or item.column() == 3:
+            start_index = index.sibling(index.row(), 2)
+            end_index = index.sibling(index.row(), 3)
+
+            start = start_index.data(Qt.DisplayRole)
+            end = end_index.data(Qt.DisplayRole)
+
+            command = commands.MethodSelected(ion, 'Manual', self._analyses_model, self._methods_view_model)
+            self._undo_stack.push(command)
+
+            command = commands.RangeUpdated(ion, reason, self._analyses_model)
+            self._undo_stack.push(command)
+
+            print("Change: %s: %s - %s" % (ion.name, start, end))
+
+        elif item.column() == 4:
+            reason_index = index.sibling(index.row(), 4)
+            reason = reason_index.data(Qt.DisplayRole)
+
+            print("Change: %s: %s" % (ion.name, reason))
+
+            command = commands.ReasonUpdated(ion, reason, self._analyses_model)
+            self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
-        mr_filename=QFileDialog.getSaveFileName(self, 'Save MR file as','','JSON (*.json)')
+        mr_filename=QFileDialog.getSaveFileName(self, 'Export MR file as','','JSON (*.json)')
         command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
         self._undo_stack.push(command)
 
