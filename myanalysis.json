@@ -1,0 +1,41 @@
+[
+  [
+    "Atom_blend_data_R04",
+    "This is my beautiful experiment."
+  ],
+  "1H+3",
+  {
+    "Method": "Manual",
+    "Color": "b",
+    "Reason": "None of the auto methods worked.",
+    "Ion": [
+      "H",
+      1,
+      1.008,
+      99.985,
+      3
+    ],
+    "Range": [
+      0.27767046552057173,
+      0.3887386517288005
+    ]
+  },
+  "2H+1",
+  {
+    "Method": "Voodoo",
+    "Color": "b",
+    "Reason": "It looks amazing",
+    "Ion": [
+      "H",
+      2,
+      2.014,
+      0.015,
+      1
+    ],
+    "Range": [
+      1.9468666666666665,
+      2.0811333333333333
+    ]
+  },
+  "2015-09-23 18:30:31.682180"
+]

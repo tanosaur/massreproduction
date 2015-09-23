@@ -143,49 +143,13 @@ class AnalysesModel(QObject):
 
         return ion, old_analysis.range
 
-    def export_analyses_to_mrfile(self):
-        analyses = self._to_json(self._analyses)
-        with open('please.mr', mode='w', encoding='utf-8') as f:
-            json.dump(analyses, f, indent=2)
+    def update_reason_for_ion(self, ion, reason):
+        old_analysis = self._analyses[ion]
+        self._analyses[ion] = old_analysis._replace(
+            reason=reason)
+        self.updated.emit(self._analyses)
 
-    def _to_json(self, analyses):
-        analyses_list = []
-        for ion, analysis in analyses.items():
-            analyses_list.append(ion.name)
-            analyses_list.append({
-            'Ion': [ion.isotope.element, ion.isotope.number, ion.isotope.mass, ion.isotope.abundance, ion.charge_state],
-            'Method': analysis.method,
-            'Range': [analysis.range.start, analysis.range.end],
-            'Reason': analysis.reason,
-            'Color': analysis.color,
-            })
-        return analyses_list
-
-    def make_analyses_from_mrfile(self, mrfile):
-        with open(mrfile, 'r', encoding='utf-8') as f:
-            contents = json.load(f)
-
-        new_analyses = self._from_json(contents)
-
-        return new_analyses
-
-    def _from_json(self, contents):
-        new_analyses = {}
-        for entry in contents:
-            if isinstance(entry, list):
-                print(entry)
-            if isinstance(entry, dict):
-                element, number, mass, abundance, charge_state = entry.get('Ion')
-                method_name = entry.get('Method')
-                start, end = entry.get('Range')
-                reason = entry.get('Reason')
-                color = entry.get('Color')
-
-                _range = Range(start, end)
-
-                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason, color)})
-
-        return new_analyses
+        return ion, old_analysis.reason
 
 
 class MetadataModel(QObject):
@@ -194,7 +158,7 @@ class MetadataModel(QObject):
     def __init__(self):
         super(MetadataModel, self).__init__(None)
 
-        self._metadata = ExperimentInfo(ID='Experiment ID',description='Description...')
+        self._metadata = ExperimentInfo(ID='Experiment ID',description='Description/Notes...')
 
     def replace_experiment_ID(self, new_experiment_ID):
         old_experiment_ID = self._metadata.ID
@@ -207,8 +171,14 @@ class MetadataModel(QObject):
         old_experiment_description = self._metadata.description
         self._metadata = self._metadata._replace(description=new_experiment_description)
         self.updated.emit(self._metadata)
-
         return old_experiment_description
+
+    def replace(self, new_metadata):
+        old_metadata = self._metadata
+        self._metadata = new_metadata
+        self.updated.emit(self._metadata)
+
+        return old_metadata
 
     def prime(self):
         self.updated.emit(self._metadata)

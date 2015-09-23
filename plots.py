@@ -16,6 +16,8 @@ import itertools
 import commands
 from viewmodels import WorkingPlotRecord
 
+rcParams['keymap.save'] = u'super+s'
+
 PICKER_SENSITIVITY = 1.2
 
 class WorkingFrame(QMainWindow):
@@ -97,7 +99,7 @@ class WorkingFrame(QMainWindow):
         if event.key == 'm':
             pass
         if event.key == 's':
-            command = commands.MethodSelected(self._picked_ion, 'Manual', self._analyses_model, self._methods_view_model)
+            command = commands.SelectMethod(self._picked_ion, 'Manual', self._analyses_model, self._methods_view_model)
             self._undo_stack.push(command)
             self._span_selector = SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, useblit=True)
             QApplication.setOverrideCursor(QCursor(Qt.IBeamCursor))
@@ -121,5 +123,5 @@ class WorkingFrame(QMainWindow):
     def _update_manual_range_for_ion(self, current_span):
         start, end = current_span
         _picked_ion = self._picked_ion
-        command = commands.ManualRangeUpdated(self._analyses_model, _picked_ion, start, end)
+        command = commands.UpdateManualRange(_picked_ion, start, end, self._analyses_model)
         self._undo_stack.push(command)

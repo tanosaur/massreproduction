@@ -1,6 +1,6 @@
 from PyQt4.QtGui import QItemDelegate, QComboBox
 from PyQt4.QtCore import QObject, SIGNAL, SLOT, pyqtSignal, pyqtSlot
-from models import BinSizeRecord, Ion, Range
+from models import BinSizeRecord, Ion, Range, ExperimentInfo, Analysis, Isotope, ISOTOPES
 import json
 import datetime
 from collections import namedtuple
@@ -56,10 +56,11 @@ class MethodsViewModel(QObject):
                 inputs.append(input_reference[_input])
 
         return inputs
-        
+
 
 class MRViewModel(QObject):
     export_error = pyqtSignal()
+    updated = pyqtSignal()
 
     def __init__(self):
         super(MRViewModel, self).__init__(None)
@@ -113,6 +114,35 @@ class MRViewModel(QObject):
         analyses_list.append(str(datetime.datetime.today())) #ISO 8601 format
 
         return analyses_list
+
+    def import_analyses_from_mrfile(self, mrfile):
+        with open(mrfile, 'r', encoding='utf-8') as f:
+            contents = json.load(f)
+
+        new_analyses, new_metadata = self._from_json(contents)
+
+        return new_analyses, new_metadata
+
+    def _from_json(self, contents):
+        new_analyses = {}
+        new_metadata = None
+
+        for entry in contents:
+            if isinstance(entry, list):
+                new_metadata = ExperimentInfo(entry[0], entry[1])
+            if isinstance(entry, dict):
+                element, number, mass, abundance, charge_state = entry.get('Ion')
+                method_name = entry.get('Method')
+                start, end = entry.get('Range')
+                reason = entry.get('Reason')
+                color = entry.get('Color')
+
+                _range = Range(start, end)
+
+                new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason, color)})
+
+        return new_analyses, new_metadata
+
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)

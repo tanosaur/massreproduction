@@ -146,25 +146,9 @@ class AddIonsToTable(QUndoCommand):
 
         return new_analyses
 
-
-
-class AnalysesUpdated():
-    def __init__(self, ion, method, start, end, reason):
-        super(AnalysesUpdated, self).__init__(None)
-
-
-    def _update_method(self):
-
-    def _run_method(self):
-
-    def _update_range(self):
-
-    def _update_reason(self):
-
-
-class MethodSelected(QUndoCommand):
+class SelectMethod(QUndoCommand):
     def __init__(self, ion, method, analyses_model, methods_view_model):
-        super(MethodSelected, self).__init__('{0}: Select {1}'.format(ion.name, method))
+        super(SelectMethod, self).__init__('{0} Method: {1}'.format(ion.name, method))
 
         self._analyses_model = analyses_model
         self._methods_view_model = methods_view_model
@@ -178,7 +162,6 @@ class MethodSelected(QUndoCommand):
         self._old_range = None
 
     def redo(self):
-
         self._new_range = self._methods_view_model.run_method_for_ion(self._ion, self._method)
         self._old_ion, self._old_method, self._old_range = self._analyses_model.update_method_for_ion(self._ion, self._method, self._new_range)
 
@@ -198,23 +181,28 @@ class ExportAnalyses(QUndoCommand):
     def undo(self):
         pass
 
-class LoadAnalyses(QUndoCommand):
-
-    def __init__(self, filename, model):
+class ImportAnalyses(QUndoCommand):
+    def __init__(self, filename, mr_view_model, analyses_model, metadata_model):
         _ , tail = os.path.split(filename)
-        super(LoadAnalyses, self).__init__('Load %s' %tail)
+        super(ImportAnalyses, self).__init__('Load %s' %tail)
+
+        self._mr_view_model= mr_view_model
+        self._analyses_model = analyses_model
+        self._metadata_model = metadata_model
 
         self._filename=filename
-        self._model=model
 
         self._old_analyses=None
+        self._old_metadata=None
 
     def redo(self):
-        made_analyses = self._model.make_analyses_from_mrfile(self._filename)
-        self._old_analyses = self._model.append(made_analyses)
+        imported_analyses, imported_metadata = self._mr_view_model.import_analyses_from_mrfile(self._filename)
+        self._old_analyses = self._analyses_model.append(imported_analyses)
+        self._old_metadata = self._metadata_model.replace(imported_metadata)
 
     def undo(self):
-        self._model.replace(self._old_analyses)
+        self._analyses_model.replace(self._old_analyses)
+        self._metadata_model.replace(self._old_metadata)
 
 class UpdateExperimentID(QUndoCommand):
     def __init__(self, experiment_ID, model):
@@ -224,12 +212,15 @@ class UpdateExperimentID(QUndoCommand):
         self._experiment_ID = experiment_ID
 
         self._old_experiment_ID = None
+        print('expID')
 
     def redo(self):
-        self._old_experiment_ID = self._model.replace(self._experiment_ID)
+        print('commands')
+        print(self._experiment_ID)
+        self._old_experiment_ID = self._model.replace_experiment_ID(self._experiment_ID)
 
     def undo(self):
-        self._model.replace(self._old_experiment_ID)
+        self._model.replace_experiment_ID(self._old_experiment_ID)
 
 class UpdateExperimentDescription(QUndoCommand):
     def __init__(self, experiment_description, model):
@@ -241,14 +232,20 @@ class UpdateExperimentDescription(QUndoCommand):
         self._old_experiment_description = None
 
     def redo(self):
-        self._old_experiment_description = self._model.replace(self._experiment_description)
+        self._old_experiment_description = self._model.replace_experiment_description(self._experiment_description)
 
     def undo(self):
-        self._model.replace(self._old_experiment_description)
+        self._model.replace_experiment_description(self._old_experiment_description)
 
-class ManualRangeUpdated(QUndoCommand):
-    def __init__(self, model, ion, start, end):
-        super(ManualRangeUpdated, self).__init__('{0}: ({1}, {2})'.format(ion.name, round(start,2), round(end,2)))
+class UpdateManualRange(QUndoCommand):
+    def __init__(self, ion, start, end, model):
+
+        if str(start):
+            start = float(start)
+        if str(end):
+            end = float(end)
+
+        super(UpdateManualRange, self).__init__('{0} Range: {1} - {2}'.format(ion.name, round(start,2), round(end,2)))
 
         self._model = model
         self._new_ion = ion
@@ -262,3 +259,20 @@ class ManualRangeUpdated(QUndoCommand):
 
     def undo(self):
         self._model.update_manual_range_for_ion(self._old_ion, self._old_range)
+
+class UpdateReason(QUndoCommand):
+    def __init__(self, ion, reason, model):
+        super(UpdateReason, self).__init__('{0} Reason: {1}'.format(ion.name, reason))
+
+        self._model = model
+        self._new_ion = ion
+        self._new_reason = reason
+
+        self._old_ion = None
+        self._old_reason = None
+
+    def redo(self):
+        self._old_ion, self._old_reason = self._model.update_reason_for_ion(self._new_ion, self._new_reason)
+
+    def undo(self):
+        self._model.update_reason_for_ion(self._old_ion, self._old_reason)

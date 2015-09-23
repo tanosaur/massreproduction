@@ -106,7 +106,7 @@ class MethodsComboDelegate(QStyledItemDelegate):
         return combo
 
 
-class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
+class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
 
     def __init__(self, tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, mr_view_model, parent=None):
         super(MainWindow, self).__init__(parent)
@@ -182,7 +182,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
             method_index = index.sibling(index.row(), 1)
             method_name = method_index.data(Qt.DisplayRole)
 
-            command = commands.MethodSelected(ion, method_name, self._analyses_model, self._methods_view_model)
+            command = commands.SelectMethod(ion, method_name, self._analyses_model, self._methods_view_model)
             self._undo_stack.push(command)
 
             print("Change: %s: %s" % (ion.name, method_name))
@@ -194,26 +194,27 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
             start = start_index.data(Qt.DisplayRole)
             end = end_index.data(Qt.DisplayRole)
 
-            command = commands.MethodSelected(ion, 'Manual', self._analyses_model, self._methods_view_model)
+            command = commands.SelectMethod(ion, 'Manual', self._analyses_model, self._methods_view_model)
             self._undo_stack.push(command)
 
-            command = commands.RangeUpdated(ion, reason, self._analyses_model)
+            command = commands.UpdateManualRange(ion, start, end, self._analyses_model)
             self._undo_stack.push(command)
 
+            print("Change: %s: %s" % (ion.name, 'Manual'))
             print("Change: %s: %s - %s" % (ion.name, start, end))
 
         elif item.column() == 4:
             reason_index = index.sibling(index.row(), 4)
             reason = reason_index.data(Qt.DisplayRole)
 
-            print("Change: %s: %s" % (ion.name, reason))
-
-            command = commands.ReasonUpdated(ion, reason, self._analyses_model)
+            command = commands.UpdateReason(ion, reason, self._analyses_model)
             self._undo_stack.push(command)
+
+            print("Change: %s: %s" % (ion.name, reason))
 
     @pyqtSlot()
     def on_action_ExportAsMR_triggered(self):
-        mr_filename=QFileDialog.getSaveFileName(self, 'Export MR file as','','JSON (*.json)')
+        mr_filename=QFileDialog.getSaveFileName(self, 'Export file as .json','','JSON (*.json)')
         command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
         self._undo_stack.push(command)
 
@@ -224,9 +225,9 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
 
     @pyqtSlot()
     def on_action_LoadMR_triggered(self):
-        mr_filename=QFileDialog.getOpenFileName(self,"Open MR file",'', 'JSON (*.json)')
+        mr_filename=QFileDialog.getOpenFileName(self,"Open .json file",'', 'JSON (*.json)')
         if mr_filename:
-            command = commands.LoadAnalyses(mr_filename, self._analyses_model)
+            command = commands.ImportAnalyses(mr_filename, self._mr_view_model, self._analyses_model, self._metadata_model)
             self._undo_stack.push(command)
 
     @pyqtSlot()
@@ -244,17 +245,20 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MainWindow):
     @pyqtSlot()
     def on_experimentIDLineEdit_editingFinished(self):
         experiment_ID = self.experimentIDLineEdit.text()
-        command = commands.UpdateExperimentID(experiment_ID, metadata_model)
+        command = commands.UpdateExperimentID(experiment_ID, self._metadata_model)
+        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_experimentdescriptionLineEdit_editingFinished(self):
         experiment_description = self.experimentdescriptionLineEdit.text()
-        command = commands.UpdateExperimentDescription(experiment_description, metadata_model)
+        command = commands.UpdateExperimentDescription(experiment_description, self._metadata_model)
+        self._undo_stack.push(command)
 
     @pyqtSlot(tuple)
     def on_metadata_updated(self, metadata):
         self.experimentIDLineEdit.setText(metadata.ID)
         self.experimentdescriptionLineEdit.setText(metadata.description)
+
 
 
 if __name__ == '__main__':

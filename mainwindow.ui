@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+ <class>MassRep</class>
+ <widget class="QMainWindow" name="MassRep">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -366,7 +366,7 @@
       <string>Export as...</string>
      </property>
      <addaction name="action_ExportAsRNG"/>
-     <addaction name="action_ExportAsMR"/>
+     <addaction name="action_ExportAsJSON"/>
     </widget>
     <addaction name="actionUndo"/>
     <addaction name="actionRedo"/>
@@ -492,15 +492,24 @@
    <property name="text">
     <string>.rng</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
+   </property>
   </action>
-  <action name="action_ExportAsMR">
+  <action name="action_ExportAsJSON">
    <property name="text">
-    <string>.mr</string>
+    <string>.json</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+E</string>
    </property>
   </action>
   <action name="actionTools">
    <property name="text">
     <string>Tools</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+T</string>
    </property>
   </action>
  </widget>
