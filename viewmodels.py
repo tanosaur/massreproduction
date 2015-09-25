@@ -8,7 +8,7 @@ from collections import namedtuple
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size analyses ions')
 MethodsRecord = namedtuple('MethodsRecord', 'methods m2cs bin_size')
 MRRecord = namedtuple('MRRecord', 'analyses metadata')
-
+AnalysesRecord = namedtuple('AnalysesRecord', 'analyses methods')
 
 class MethodsViewModel(QObject):
 
@@ -56,7 +56,6 @@ class MethodsViewModel(QObject):
                 inputs.append(input_reference[_input])
 
         return inputs
-
 
 class MRViewModel(QObject):
     export_error = pyqtSignal()
@@ -143,7 +142,6 @@ class MRViewModel(QObject):
 
         return new_analyses, new_metadata
 
-
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)
 
@@ -176,8 +174,6 @@ class WorkingPlotViewModel(QObject):
     def on_ions_updated(self, new_ions):
         self._record = self._record._replace(ions=new_ions)
         self.updated.emit(self._record)
-
-AnalysesRecord = namedtuple('AnalysesRecord', 'analyses methods')
 
 class AnalysesViewModel(QObject):
     updated = pyqtSignal(AnalysesRecord)

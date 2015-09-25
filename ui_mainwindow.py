@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Wed Sep 23 18:34:13 2015
+# Created: Thu Sep 24 12:39:10 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MassRep(object):
     def setupUi(self, MassRep):
         MassRep.setObjectName(_fromUtf8("MassRep"))
-        MassRep.resize(1358, 576)
+        MassRep.resize(1276, 576)
         self.centralwidget = QtGui.QWidget(MassRep)
         self.centralwidget.setObjectName(_fromUtf8("centralwidget"))
         self.horizontalLayout_3 = QtGui.QHBoxLayout(self.centralwidget)
@@ -166,7 +166,7 @@ class Ui_MassRep(object):
         self.horizontalLayout_3.addLayout(self.horizontalLayout_2)
         MassRep.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MassRep)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 1358, 22))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 1276, 22))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -217,8 +217,8 @@ class Ui_MassRep(object):
         self.actionLoad_mr.setObjectName(_fromUtf8("actionLoad_mr"))
         self.action_LoadRNG = QtGui.QAction(MassRep)
         self.action_LoadRNG.setObjectName(_fromUtf8("action_LoadRNG"))
-        self.action_LoadMR = QtGui.QAction(MassRep)
-        self.action_LoadMR.setObjectName(_fromUtf8("action_LoadMR"))
+        self.action_LoadJSON = QtGui.QAction(MassRep)
+        self.action_LoadJSON.setObjectName(_fromUtf8("action_LoadJSON"))
         self.action_ExportAsRNG = QtGui.QAction(MassRep)
         self.action_ExportAsRNG.setObjectName(_fromUtf8("action_ExportAsRNG"))
         self.action_ExportAsJSON = QtGui.QAction(MassRep)
@@ -230,7 +230,7 @@ class Ui_MassRep(object):
         self.menuFile.addSeparator()
         self.menuHelp.addAction(self.actionAbout)
         self.menuLoad.addAction(self.action_LoadRNG)
-        self.menuLoad.addAction(self.action_LoadMR)
+        self.menuLoad.addAction(self.action_LoadJSON)
         self.menuExport_as.addAction(self.action_ExportAsRNG)
         self.menuExport_as.addAction(self.action_ExportAsJSON)
         self.menuEdit.addAction(self.actionUndo)
@@ -284,7 +284,8 @@ class Ui_MassRep(object):
         self.actionLoad_rng.setText(_translate("MassRep", "Load .rng", None))
         self.actionLoad_mr.setText(_translate("MassRep", "Load .mr", None))
         self.action_LoadRNG.setText(_translate("MassRep", ".rng", None))
-        self.action_LoadMR.setText(_translate("MassRep", ".mr", None))
+        self.action_LoadJSON.setText(_translate("MassRep", ".json", None))
+        self.action_LoadJSON.setToolTip(_translate("MassRep", ".json", None))
         self.action_ExportAsRNG.setText(_translate("MassRep", ".rng", None))
         self.action_ExportAsRNG.setShortcut(_translate("MassRep", "Ctrl+R", None))
         self.action_ExportAsJSON.setText(_translate("MassRep", ".json", None))

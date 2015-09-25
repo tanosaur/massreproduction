@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1358</width>
+    <width>1276</width>
     <height>576</height>
    </rect>
   </property>
@@ -332,7 +332,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1358</width>
+     <width>1276</width>
      <height>22</height>
     </rect>
    </property>
@@ -359,7 +359,7 @@
       <string>Load...</string>
      </property>
      <addaction name="action_LoadRNG"/>
-     <addaction name="action_LoadMR"/>
+     <addaction name="action_LoadJSON"/>
     </widget>
     <widget class="QMenu" name="menuExport_as">
      <property name="title">
@@ -483,9 +483,12 @@
     <string>.rng</string>
    </property>
   </action>
-  <action name="action_LoadMR">
+  <action name="action_LoadJSON">
    <property name="text">
-    <string>.mr</string>
+    <string>.json</string>
+   </property>
+   <property name="toolTip">
+    <string>.json</string>
    </property>
   </action>
   <action name="action_ExportAsRNG">

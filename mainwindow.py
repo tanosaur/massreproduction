@@ -213,10 +213,11 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
             print("Change: %s: %s" % (ion.name, reason))
 
     @pyqtSlot()
-    def on_action_ExportAsMR_triggered(self):
+    def on_action_ExportAsJSON_triggered(self):
         mr_filename=QFileDialog.getSaveFileName(self, 'Export file as .json','','JSON (*.json)')
-        command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
-        self._undo_stack.push(command)
+        if mr_filename:
+            command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
+            self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_export_error(self):
@@ -224,7 +225,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         QApplication.beep()
 
     @pyqtSlot()
-    def on_action_LoadMR_triggered(self):
+    def on_action_LoadJSON_triggered(self):
         mr_filename=QFileDialog.getOpenFileName(self,"Open .json file",'', 'JSON (*.json)')
         if mr_filename:
             command = commands.ImportAnalyses(mr_filename, self._mr_view_model, self._analyses_model, self._metadata_model)

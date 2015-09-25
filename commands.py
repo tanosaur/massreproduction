@@ -126,7 +126,7 @@ class AddIonsToTable(QUndoCommand):
         new_analyses = {}
 
         for ion in new_ions:
-            new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color='g')})
+            new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color='g')})
 
         return new_analyses
 
@@ -142,7 +142,7 @@ class AddIonsToTable(QUndoCommand):
             color = next(colors)
 
             for ion in ions:
-                new_analyses.update({ion: Analysis(method='Dummy', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
+                new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
 
         return new_analyses
 
@@ -212,10 +212,8 @@ class UpdateExperimentID(QUndoCommand):
         self._experiment_ID = experiment_ID
 
         self._old_experiment_ID = None
-        print('expID')
 
     def redo(self):
-        print('commands')
         print(self._experiment_ID)
         self._old_experiment_ID = self._model.replace_experiment_ID(self._experiment_ID)
 
