@@ -44,6 +44,9 @@ class WorkingFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self.ax = self.fig.add_subplot(111)
+        self.ax.set_yscale('log')
+        self.ax.set_xlabel('Da')
+        self.ax.set_ylabel('Counts')
 
         self._ions_for_lines = {}
         self._picked_ion = None
@@ -52,26 +55,27 @@ class WorkingFrame(QMainWindow):
         self._methods_view_model = methods_view_model
         self._undo_stack = undo_stack
 
+        scale = 1.15
+        f = self.zoom_factory(base_scale = scale)
+
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
-
         self.ax.cla()
-
         self.lines = 0
+
+            # cur_xlim = self.ax.get_xlim()
+            # cur_ylim = self.ax.get_ylim()
+            # self.ax.set_xlim(cur_xlim)
+            # self.ax.set_ylim(cur_ylim)
 
         if record.m2cs:
             self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
-
-        self.ax.set_yscale('log')
-        self.ax.set_xlabel('Da')
-        self.ax.set_ylabel('Counts')
-
 
         if record.ions:
 
             trans = blended_transform_factory(self.ax.transData, self.ax.transAxes)
 
-            colors=itertools.cycle(list('rybmc'))
+            colors=itertools.cycle(list('byrgmc'))
 
             element_keyfunc = lambda x: x.isotope.element
             sorted_ions = sorted(record.ions, key=element_keyfunc)
@@ -93,7 +97,7 @@ class WorkingFrame(QMainWindow):
                     line = self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
                 else:
-                    self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
+                    self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.7)
 
         self.canvas.draw()
 
@@ -132,3 +136,36 @@ class WorkingFrame(QMainWindow):
         _picked_ion = self._picked_ion
         command = commands.UpdateManualRange(_picked_ion, start, end, self._analyses_model)
         self._undo_stack.push(command)
+
+    def zoom_factory(self, base_scale = 2.):
+        def zoom_fun(event):
+            # get the current x and y limits
+            cur_xlim = self.ax.get_xlim()
+            cur_ylim = self.ax.get_ylim()
+            cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
+            cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
+            xdata = event.xdata # get event x location
+            ydata = event.ydata # get event y location
+            if event.button == 'up':
+                # deal with zoom in
+                scale_factor = 1/base_scale
+            elif event.button == 'down':
+                # deal with zoom out
+                scale_factor = base_scale
+            else:
+                # deal with something that should never happen
+                scale_factor = 1
+                print(event.button)
+            # set new limits
+            self.ax.set_xlim([xdata - cur_xrange*scale_factor,
+                         xdata + cur_xrange*scale_factor])
+            self.ax.set_ylim([ydata - cur_yrange*scale_factor,
+                         ydata + cur_yrange*scale_factor])
+            self.canvas.draw() # force re-draw
+
+        fig = self.ax.get_figure() # get the figure of interest
+        # attach the call back
+        self.canvas.mpl_connect('scroll_event',zoom_fun)
+
+        #return the function
+        return zoom_fun

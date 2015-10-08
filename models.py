@@ -30,6 +30,26 @@ Analysis = namedtuple('Analysis', 'method range reason color')
 ExperimentInfo = namedtuple('Experiment', 'ID description')
 BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
 
+RGB = [
+(41,208,208), # Cyan
+(255,146,51), # Orange
+(129,38,192), # Purple
+(29,105,20), # Green
+(255,238,51), # Yellow
+(173,35,35), # Red
+(42,76,215), # Blue
+(87,87,87), # Dark grey
+(129,74,25), # Brown
+(129,197,122), # Light green
+(255,205,243), # Pink
+(157,175,255), # Light blue
+(160,160,160), # Light grey
+(233,222,187), # Tan
+]
+
+RGB = [tuple(list(val/255 for val in color)) for color in RGB]
+print(RGB)
+
 class M2CModel(QObject):
     updated = pyqtSignal(tuple)
 
@@ -157,22 +177,27 @@ class AnalysesModel(QObject):
 
     def _color_by_element(self, new_ions):
         new_analyses = {}
+        existent_color_mapping = {}
 
-        #TODO check if element already in table, then show it the same color (default setting - test users as to what they like...)
-        colors = itertools.cycle(list('byrgcm'))
+        for ion in self._analyses.keys():
+            existent_color_mapping.update({ion.isotope.element: self._analyses[ion].color})
+
+        used_colors = [existent_color_mapping[element] for element in existent_color_mapping]
+        unused_colors = list(set(RGB) - set(used_colors))
+        colors = itertools.cycle(unused_colors)
         element_keyfunc = lambda x: x.isotope.element
         sorted_ions = sorted(new_ions, key=element_keyfunc)
 
         for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
 
-            if element in [ion.isotope.element for ion in self._analyses.keys()]:
-                color = self._analyses[ion].color
+            if element in existent_color_mapping.keys():
+                color = existent_color_mapping[element]
             else:
                 color = next(colors)
 
             for ion in ions:
                 new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
-
+                print(color)
         return new_analyses
 
 class MetadataModel(QObject):
