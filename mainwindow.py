@@ -213,11 +213,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
             print("Change: %s: %s" % (ion.name, reason))
 
     @pyqtSlot()
-    def on_action_ExportAsJSON_triggered(self):
+    def on_action_ExportAsMR_triggered(self):
         mr_filename=QFileDialog.getSaveFileName(self, 'Export file as .json','','JSON (*.json)')
-        if mr_filename:
-            command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
-            self._undo_stack.push(command)
+        command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
+        self._undo_stack.push(command)
 
     @pyqtSlot()
     def on_export_error(self):
@@ -225,7 +224,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         QApplication.beep()
 
     @pyqtSlot()
-    def on_action_LoadJSON_triggered(self):
+    def on_action_LoadMR_triggered(self):
         mr_filename=QFileDialog.getOpenFileName(self,"Open .json file",'', 'JSON (*.json)')
         if mr_filename:
             command = commands.ImportAnalyses(mr_filename, self._mr_view_model, self._analyses_model, self._metadata_model)
@@ -261,14 +260,13 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         self.experimentdescriptionLineEdit.setText(metadata.description)
 
 
-
 if __name__ == '__main__':
     app=QApplication(sys.argv)
     print('Loading MassRep...')
 
     undo_stack = QUndoStack()
 
-    loaded_m2cs_model = models.LoadedM2CModel()
+    loaded_m2cs_model = models.M2CModel()
     bin_size_model = models.BinSizeModel()
     suggested_ions_model = models.SuggestedIonsModel()
     methods_model = models.MethodsModel()

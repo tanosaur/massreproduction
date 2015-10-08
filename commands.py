@@ -1,7 +1,6 @@
 import json
 import os
 import aptread.aptload
-import itertools
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
 from models import Isotope, ISOTOPES, Ion, Range, Analysis
@@ -112,39 +111,11 @@ class AddIonsToTable(QUndoCommand):
         self._old_analyses=None
 
     def redo(self):
-        new_analyses = self._analyses_from_suggest(self._ions)
+        new_analyses = self._model.analyses_from_suggest(self._ions)
         self._old_analyses = self._model.append(new_analyses)
 
     def undo(self):
         self._model.replace(self._old_analyses)
-
-    def _analyses_from_suggest(self, new_ions):
-        new_analyses = self._color_by_element(new_ions)
-        return new_analyses
-
-    def _color_all_same(self, new_ions):
-        new_analyses = {}
-
-        for ion in new_ions:
-            new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color='g')})
-
-        return new_analyses
-
-    def _color_by_element(self, new_ions):
-        new_analyses = {}
-
-        #TODO check if element already in table, then show it the same color (default setting - test users as to what they like...)
-        colors = itertools.cycle(list('byrgcm'))
-        element_keyfunc = lambda x: x.isotope.element
-        sorted_ions = sorted(new_ions, key=element_keyfunc)
-
-        for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
-            color = next(colors)
-
-            for ion in ions:
-                new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
-
-        return new_analyses
 
 class SelectMethod(QUndoCommand):
     def __init__(self, ion, method, analyses_model, methods_view_model):

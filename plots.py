@@ -11,6 +11,8 @@ from matplotlib.backend_bases import key_press_handler
 from matplotlib.widgets import SpanSelector
 from matplotlib.lines import Line2D
 from matplotlib import rcParams, patheffects
+from matplotlib.transforms import blended_transform_factory
+
 import itertools
 
 import commands
@@ -64,7 +66,11 @@ class WorkingFrame(QMainWindow):
         self.ax.set_xlabel('Da')
         self.ax.set_ylabel('Counts')
 
+
         if record.ions:
+
+            trans = blended_transform_factory(self.ax.transData, self.ax.transAxes)
+
             colors=itertools.cycle(list('rybmc'))
 
             element_keyfunc = lambda x: x.isotope.element
@@ -74,9 +80,10 @@ class WorkingFrame(QMainWindow):
                 line_color=next(colors)
 
                 for ion in ions:
-                    line = self.ax.axvline(ion.mass_to_charge, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
+                    y_height = ion.isotope.abundance/100
+                    line = self.ax.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
-                    self.ax.text(ion.mass_to_charge, 100, ion.name, fontsize=10, picker=PICKER_SENSITIVITY)
+                    self.ax.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=trans, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=trans, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
 
         if record.analyses:
 

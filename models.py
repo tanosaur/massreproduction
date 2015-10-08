@@ -1,5 +1,6 @@
 from collections import namedtuple
 import unittest
+import itertools
 import json
 from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 
@@ -26,14 +27,14 @@ class Ion(namedtuple('Ion', 'isotope charge_state')):
 
 Range = namedtuple('Range', 'start end')
 Analysis = namedtuple('Analysis', 'method range reason color')
-BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
 ExperimentInfo = namedtuple('Experiment', 'ID description')
+BinSizeRecord = namedtuple('BinSizeRecord', 'maximum minimum value')
 
-class LoadedM2CModel(QObject):
+class M2CModel(QObject):
     updated = pyqtSignal(tuple)
 
     def __init__(self):
-        super(LoadedM2CModel, self).__init__(None)
+        super(M2CModel, self).__init__(None)
 
         self._m2cs=()
 
@@ -70,7 +71,6 @@ class BinSizeModel(QObject):
 
     def prime(self):
         self.updated.emit(self._record)
-
 
 class SuggestedIonsModel(QObject):
     updated = pyqtSignal(tuple)
@@ -151,6 +151,29 @@ class AnalysesModel(QObject):
 
         return ion, old_analysis.reason
 
+    def analyses_from_suggest(self, new_ions):
+        new_analyses = self._color_by_element(new_ions)
+        return new_analyses
+
+    def _color_by_element(self, new_ions):
+        new_analyses = {}
+
+        #TODO check if element already in table, then show it the same color (default setting - test users as to what they like...)
+        colors = itertools.cycle(list('byrgcm'))
+        element_keyfunc = lambda x: x.isotope.element
+        sorted_ions = sorted(new_ions, key=element_keyfunc)
+
+        for element, ions in itertools.groupby(sorted_ions, key=element_keyfunc):
+
+            if element in [ion.isotope.element for ion in self._analyses.keys()]:
+                color = self._analyses[ion].color
+            else:
+                color = next(colors)
+
+            for ion in ions:
+                new_analyses.update({ion: Analysis(method='Manual', range=Range(start=ion.mass_to_charge, end=ion.mass_to_charge), reason=None, color=color)})
+
+        return new_analyses
 
 class MetadataModel(QObject):
     updated = pyqtSignal(tuple)
