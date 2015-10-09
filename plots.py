@@ -44,9 +44,6 @@ class WorkingFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self.ax = self.fig.add_subplot(111)
-        self.ax.set_yscale('log')
-        self.ax.set_xlabel('Da')
-        self.ax.set_ylabel('Counts')
 
         self._ions_for_lines = {}
         self._picked_ion = None
@@ -54,6 +51,8 @@ class WorkingFrame(QMainWindow):
         self._analyses_model = analyses_model
         self._methods_view_model = methods_view_model
         self._undo_stack = undo_stack
+
+        self._preserve_ax_limits = False
 
         scale = 1.15
         f = self.zoom_factory(base_scale = scale)
@@ -63,12 +62,13 @@ class WorkingFrame(QMainWindow):
         self.ax.cla()
         self.lines = 0
 
-            # cur_xlim = self.ax.get_xlim()
-            # cur_ylim = self.ax.get_ylim()
-            # self.ax.set_xlim(cur_xlim)
-            # self.ax.set_ylim(cur_ylim)
-
         if record.m2cs:
+            if self._preserve_ax_limits:
+                cur_xlim = self.ax.get_xlim()
+                cur_ylim = self.ax.get_ylim()
+                self.ax.set_xlim(cur_xlim)
+                self.ax.set_ylim(cur_ylim)
+
             self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
 
         if record.ions:
@@ -99,7 +99,13 @@ class WorkingFrame(QMainWindow):
                 else:
                     self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.7)
 
+        self.ax.set_yscale('log')
+        self.ax.set_xlabel('Da')
+        self.ax.set_ylabel('Counts')
         self.canvas.draw()
+
+        if record.m2cs:
+            self._preserve_ax_limits = True
 
     def on_key_press(self, event):
         key_press_handler(event, self.canvas, self.mpl_toolbar)
