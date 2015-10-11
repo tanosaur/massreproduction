@@ -3,7 +3,11 @@ from PyQt4.QtCore import QObject, SIGNAL, SLOT, pyqtSignal, pyqtSlot
 from models import BinSizeRecord, Ion, Range, ExperimentInfo, Analysis, Isotope, ISOTOPES
 import json
 import datetime
+import itertools
 from collections import namedtuple
+from string import ascii_uppercase
+
+import numpy as np
 
 WorkingPlotRecord = namedtuple('WorkingPlotRecord', 'm2cs bin_size analyses ions')
 MethodsRecord = namedtuple('MethodsRecord', 'methods m2cs bin_size')
@@ -57,12 +61,12 @@ class MethodsViewModel(QObject):
 
         return inputs
 
-class MRViewModel(QObject):
+class ExportViewModel(QObject):
     export_error = pyqtSignal()
     updated = pyqtSignal()
 
     def __init__(self):
-        super(MRViewModel, self).__init__(None)
+        super(ExportViewModel, self).__init__(None)
 
         self._record = MRRecord(
             analyses=(),
@@ -141,6 +145,30 @@ class MRViewModel(QObject):
                 new_analyses.update({Ion(Isotope(element, number, mass, abundance), charge_state): Analysis(method_name, _range, reason, color)})
 
         return new_analyses, new_metadata
+
+    def export_analyses_to_rngfile(self, filename):
+        with open(filename, 'w') as f:
+            record = self._record
+            line_1 = str(record.metadata.ID)
+            line_2 = str(len(record.analyses)) + ' ' + str(len(record.analyses))
+
+            ion_names = []
+            ranges = []
+            middle_block = ''
+            row_format ="{:<15}" * (len(record.analyses) + 1)
+            alphabet=itertools.cycle(list(ascii_uppercase))
+
+            for ion, analysis in record.analyses.items():
+                middle_block += str(ion.name) + '\n' + next(alphabet) + ' ' + str(analysis.color[0]) + ' ' + str(analysis.color[1]) + ' ' + str(analysis.color[2]) + '\n'
+                ion_names.append(ion.name)
+                ranges.append(str(analysis.range.start) + ' ' + str(analysis.range.end))
+
+            final_block_header = row_format.format('', * ion_names)
+            final_block_contents = row_format.format('', * ranges)
+
+            contents = line_1 + '\n' + line_2 + '\n' + middle_block + final_block_header + '\n' + final_block_contents
+            f.write(contents)
+
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)

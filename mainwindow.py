@@ -1,5 +1,5 @@
-from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent, QObject
-from PyQt4.QtGui import QMainWindow, QDialog, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent
+from PyQt4.QtCore import pyqtSlot, Qt, pyqtProperty, QModelIndex, QEvent, QObject, QPoint
+from PyQt4.QtGui import QMainWindow, QDialog, QUndoStack, QUndoView, QApplication, QFileDialog, QStandardItemModel, QItemSelection, QStandardItem, QComboBox, QStyledItemDelegate, QLabel, QItemSelectionModel, QFocusEvent, QMenu, QKeySequence, QShortcut
 
 import sys
 import ui_mainwindow
@@ -40,6 +40,7 @@ class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
             self._suggested_ions_model
         )
         self._undo_stack.push(command)
+        self.addionsButton.setFocus()
         self.clearionsButton.setEnabled(True)
 
     @pyqtSlot()
@@ -108,7 +109,7 @@ class MethodsComboDelegate(QStyledItemDelegate):
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
 
-    def __init__(self, tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, mr_view_model, parent=None):
+    def __init__(self, tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, export_view_model, parent=None):
         super(MainWindow, self).__init__(parent)
         self.setupUi(self)
 
@@ -123,7 +124,7 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         self._metadata_model = metadata_model
 
         self._methods_view_model = methods_view_model
-        self._mr_view_model = mr_view_model
+        self._export_view_model = export_view_model
 
     @pyqtSlot(models.BinSizeRecord)
     def on_bin_size_updated(self, bin_size):
@@ -171,6 +172,28 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         for row in range(0, qmodel.rowCount()):
             self.rangedTable.openPersistentEditor(qmodel.index(row, 1))
         self.rangedTable.setColumnWidth(1, 95)
+        self.rangedTable.setContextMenuPolicy(3)
+        self.rangedTable.customContextMenuRequested.connect(self.context_menu_requested)
+        shortcut = QShortcut(QKeySequence('Del'), self.rangedTable, self.delete_ion,self.delete_ion, context=0)
+
+    @pyqtSlot(QPoint)
+    def context_menu_requested(self, point):
+        if self.rangedTable.selectedIndexes():
+            menu = QMenu(self)
+            delete_analysis = menu.addAction('Delete')
+            delete_analysis.triggered.connect(self.delete_ion)
+            menu.exec_(self.mapToGlobal(point))
+
+    @pyqtSlot()
+    def delete_ion(self):
+        selected_indexes = self.rangedTable.selectedIndexes()
+        selected_ions = []
+        for index in selected_indexes:
+            if index.column() == 0:
+                selected_ions.append(index.data(Qt.UserRole))
+
+        command = commands.DeleteIon(selected_ions, self._analyses_model)
+        self._undo_stack.push(command)
 
     @pyqtSlot(QStandardItem)
     def on_qmodel_itemChanged(self, item):
@@ -213,9 +236,15 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
             print("Change: %s: %s" % (ion.name, reason))
 
     @pyqtSlot()
-    def on_action_ExportAsMR_triggered(self):
-        mr_filename=QFileDialog.getSaveFileName(self, 'Export file as .json','','JSON (*.json)')
-        command = commands.ExportAnalyses(mr_filename, self._mr_view_model)
+    def on_action_ExportAsJSON_triggered(self):
+        json_filename=QFileDialog.getSaveFileName(self, 'Export file as .json','','JSON (*.json)')
+        command = commands.ExportAsJSON(json_filename, self._export_view_model)
+        self._undo_stack.push(command)
+
+    @pyqtSlot()
+    def on_action_ExportAsRNG_triggered(self):
+        rng_filename=QFileDialog.getSaveFileName(self, 'Export file as .rng','','RNG (*.rng)')
+        command = commands.ExportAsRNG(rng_filename, self._export_view_model)
         self._undo_stack.push(command)
 
     @pyqtSlot()
@@ -224,10 +253,10 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
         QApplication.beep()
 
     @pyqtSlot()
-    def on_action_LoadMR_triggered(self):
+    def on_action_LoadJSON_triggered(self):
         mr_filename=QFileDialog.getOpenFileName(self,"Open .json file",'', 'JSON (*.json)')
         if mr_filename:
-            command = commands.ImportAnalyses(mr_filename, self._mr_view_model, self._analyses_model, self._metadata_model)
+            command = commands.ImportJSON(mr_filename, self._export_view_model, self._analyses_model, self._metadata_model)
             self._undo_stack.push(command)
 
     @pyqtSlot()
@@ -275,11 +304,11 @@ if __name__ == '__main__':
 
     working_plot_view_model = viewmodels.WorkingPlotViewModel()
     methods_view_model = viewmodels.MethodsViewModel()
-    mr_view_model = viewmodels.MRViewModel()
+    export_view_model = viewmodels.ExportViewModel()
 
     tools_dialog = ToolsDialog(undo_stack, suggested_ions_model, analyses_model)
     export_error_dialog = ExportErrorDialog()
-    main_window = MainWindow(tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, mr_view_model)
+    main_window = MainWindow(tools_dialog, export_error_dialog, undo_stack, loaded_m2cs_model, bin_size_model, analyses_model, methods_view_model, metadata_model, export_view_model)
     working_frame = WorkingFrame(analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
@@ -291,7 +320,7 @@ if __name__ == '__main__':
     bin_size_model.updated.connect(methods_view_model.on_bin_size_updated)
 
     analyses_model.updated.connect(working_plot_view_model.on_analyses_updated)
-    analyses_model.updated.connect(mr_view_model.on_analyses_updated)
+    analyses_model.updated.connect(export_view_model.on_analyses_updated)
 
     suggested_ions_model.updated.connect(working_plot_view_model.on_ions_updated)
     suggested_ions_model.updated.connect(tools_dialog.on_ions_updated)
@@ -305,9 +334,9 @@ if __name__ == '__main__':
     methods_model.updated.connect(methods_view_model.on_methods_updated)
 
     metadata_model.updated.connect(main_window.on_metadata_updated)
-    metadata_model.updated.connect(mr_view_model.on_metadata_updated)
+    metadata_model.updated.connect(export_view_model.on_metadata_updated)
 
-    mr_view_model.export_error.connect(main_window.on_export_error)
+    export_view_model.export_error.connect(main_window.on_export_error)
 
     loaded_m2cs_model.prime()
     bin_size_model.prime()
@@ -318,4 +347,5 @@ if __name__ == '__main__':
     methods_model.replace(methods)
 
     main_window.show()
+    print('Let us begin.')
     app.exec_()

@@ -383,6 +383,16 @@ class AnalysesModel(QObject):
         self._analyses = new_analyses
         self.updated.emit(self._analyses)
 
+    def delete_analyses(self, ions_to_delete):
+        old_analyses = self._analyses.copy()
+
+        for ion in ions_to_delete:
+            self._analyses.pop(ion)
+
+        self.updated.emit(self._analyses)
+
+        return old_analyses
+
     def update_method_for_ion(self, ion, method, _range):
         old_analysis = self._analyses[ion]
         self._analyses[ion] = old_analysis._replace(

@@ -139,9 +139,9 @@ class SelectMethod(QUndoCommand):
     def undo(self):
         self._analyses_model.update_method_for_ion(self._old_ion, self._old_method, self._old_range)
 
-class ExportAnalyses(QUndoCommand):
+class ExportAsJSON(QUndoCommand):
     def __init__(self, filename, model):
-        super(ExportAnalyses, self).__init__('Export as {0}'.format(filename))
+        super(ExportAsJSON, self).__init__('Export as {0}'.format(filename))
 
         self._model = model
         self._filename = filename
@@ -152,10 +152,10 @@ class ExportAnalyses(QUndoCommand):
     def undo(self):
         pass
 
-class ImportAnalyses(QUndoCommand):
+class ImportJSON(QUndoCommand):
     def __init__(self, filename, mr_view_model, analyses_model, metadata_model):
         _ , tail = os.path.split(filename)
-        super(ImportAnalyses, self).__init__('Load %s' %tail)
+        super(ImportJSON, self).__init__('Load %s' %tail)
 
         self._mr_view_model= mr_view_model
         self._analyses_model = analyses_model
@@ -174,6 +174,19 @@ class ImportAnalyses(QUndoCommand):
     def undo(self):
         self._analyses_model.replace(self._old_analyses)
         self._metadata_model.replace(self._old_metadata)
+
+class ExportAsRNG(QUndoCommand):
+    def __init__(self, filename, model):
+        super(ExportAsRNG, self).__init__('Export as {0}'.format(filename))
+
+        self._model = model
+        self._filename = filename
+
+    def redo(self):
+        self._model.export_analyses_to_rngfile(self._filename)
+
+    def undo(self):
+        pass
 
 class UpdateExperimentID(QUndoCommand):
     def __init__(self, experiment_ID, model):
@@ -245,3 +258,18 @@ class UpdateReason(QUndoCommand):
 
     def undo(self):
         self._model.update_reason_for_ion(self._old_ion, self._old_reason)
+
+class DeleteIon(QUndoCommand):
+    def __init__(self, selected_ions, model):
+        super(DeleteIon, self).__init__('Delete {0}'.format(', '.join(ion.name for ion in selected_ions)))
+
+        self._model = model
+        self._ions_to_delete = selected_ions
+
+        self._old_analyses = None
+
+    def redo(self):
+        self._old_analyses = self._model.delete_analyses(self._ions_to_delete)
+
+    def undo(self):
+        self._model.replace(self._old_analyses)
