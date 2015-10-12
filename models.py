@@ -314,8 +314,8 @@ class BinSizeModel(QObject):
 
         self._record = BinSizeRecord(
             maximum = 9000,
-            minimum = 10,
-            value = 2000
+            minimum = 1000,
+            value = 4000,
         )
 
     def replace_value(self, new_value): #TODO throw exception for new_bin_size > max, < min
@@ -344,6 +344,10 @@ class SuggestedIonsModel(QObject):
         self.updated.emit(self._suggested_ions)
 
         return old_suggested_ions
+
+    def clear(self):
+        self._suggested_ions = ()
+        self.updated.emit(self._suggested_ions)
 
     def prime(self):
         self.updated.emit(self._suggested_ions)

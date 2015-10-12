@@ -53,8 +53,7 @@ class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
 
     @pyqtSlot()
     def on_clearionsButton_clicked(self):
-        self.ionlistTree.reset()
-        # TODO push through to model and decide action
+        self._suggested_ions_model.clear()
 
     @pyqtSlot(str)
     def on_maxchargestateLineEdit_textEdited(self):
@@ -312,6 +311,7 @@ if __name__ == '__main__':
     working_frame = WorkingFrame(analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
+    working_plot_view_model.loaded.connect(working_frame.on_loaded)
     loaded_m2cs_model.updated.connect(working_plot_view_model.on_m2cs_updated)
     loaded_m2cs_model.updated.connect(methods_view_model.on_m2cs_updated)
 

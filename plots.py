@@ -44,6 +44,7 @@ class WorkingFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self.ax = self.fig.add_subplot(111)
+        self.ax_2 = self.ax.twinx()
 
         self._ions_for_lines = {}
         self._picked_ion = None
@@ -58,9 +59,8 @@ class WorkingFrame(QMainWindow):
         f = self.zoom_factory(base_scale = scale)
 
     @pyqtSlot(WorkingPlotRecord)
-    def on_updated(self, record):
+    def on_loaded(self, record):
         self.ax.cla()
-        self.lines = 0
 
         if record.m2cs:
             if self._preserve_ax_limits:
@@ -69,7 +69,17 @@ class WorkingFrame(QMainWindow):
                 self.ax.set_xlim(cur_xlim)
                 self.ax.set_ylim(cur_ylim)
 
-            self.ax.hist(record.m2cs, record.bin_size.value, histtype='step')
+            self.ax.hist(record.m2cs, record.bin_size.value, color = 'k', histtype='step')
+            self.ax.set_yscale('log')
+            self.ax.set_xlabel('Da')
+            self.ax.set_ylabel('Counts')
+            self.canvas.draw()
+            self._preserve_ax_limits = True
+
+    @pyqtSlot(WorkingPlotRecord)
+    def on_updated(self, record):
+        self.ax_2.cla()
+        self.lines = 0
 
         if record.ions:
 
@@ -85,27 +95,21 @@ class WorkingFrame(QMainWindow):
 
                 for ion in ions:
                     y_height = ion.isotope.abundance/100
-                    line = self.ax.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
+                    line = self.ax_2.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
-                    self.ax.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=trans, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=trans, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
+                    self.ax_2.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=trans, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=trans, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
 
         if record.analyses:
 
             for ion, analysis in record.analyses.items():
                 start, end = analysis.range
                 if start == end: #TODO make safer than this
-                    line = self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
+                    line = self.ax_2.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
                 else:
-                    self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.7)
+                    self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.7)
 
-        self.ax.set_yscale('log')
-        self.ax.set_xlabel('Da')
-        self.ax.set_ylabel('Counts')
         self.canvas.draw()
-
-        if record.m2cs:
-            self._preserve_ax_limits = True
 
     def on_key_press(self, event):
         key_press_handler(event, self.canvas, self.mpl_toolbar)
@@ -129,7 +133,7 @@ class WorkingFrame(QMainWindow):
         if isinstance(event.artist, Line2D):
             line=event.artist
             ion = self._ions_for_lines[line]
-            self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            self.ax_2.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
             self._picked_ion = ion
             line.remove()
             self.canvas.draw()

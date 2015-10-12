@@ -172,6 +172,7 @@ class ExportViewModel(QObject):
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)
+    loaded = pyqtSignal(WorkingPlotRecord)
 
     def __init__(self):
         super(WorkingPlotViewModel, self).__init__(None)
@@ -186,12 +187,12 @@ class WorkingPlotViewModel(QObject):
     @pyqtSlot(tuple)
     def on_m2cs_updated(self, new_m2cs):
         self._record = self._record._replace(m2cs=new_m2cs)
-        self.updated.emit(self._record)
+        self.loaded.emit(self._record)
 
     @pyqtSlot(BinSizeRecord)
     def on_bin_size_updated(self, new_bin_size):
         self._record = self._record._replace(bin_size=new_bin_size)
-        self.updated.emit(self._record)
+        self.loaded.emit(self._record)
 
     @pyqtSlot(tuple)
     def on_analyses_updated(self, new_analyses):
