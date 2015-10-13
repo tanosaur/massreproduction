@@ -55,9 +55,6 @@ class WorkingFrame(QMainWindow):
 
         self._preserve_ax_limits = False
 
-        scale = 1.15
-        f = self.zoom_factory(base_scale = scale)
-
     @pyqtSlot(WorkingPlotRecord)
     def on_loaded(self, record):
         self.ax.cla()
@@ -81,11 +78,18 @@ class WorkingFrame(QMainWindow):
         self.ax_2.cla()
         self.lines = 0
 
+        if record.m2cs:
+            if self._preserve_ax_limits:
+                cur_xlim = self.ax.get_xlim()
+                cur_ylim = self.ax.get_ylim()
+                self.ax_2.set_xlim(cur_xlim)
+                self.ax_2.set_ylim(cur_ylim)
+
         if record.ions:
 
             trans = blended_transform_factory(self.ax.transData, self.ax.transAxes)
 
-            colors=itertools.cycle(list('byrgmc'))
+            colors=itertools.cycle(list('bygrcm'))
 
             element_keyfunc = lambda x: x.isotope.element
             sorted_ions = sorted(record.ions, key=element_keyfunc)
@@ -107,7 +111,7 @@ class WorkingFrame(QMainWindow):
                     line = self.ax_2.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
                 else:
-                    self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.7)
+                    self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
         self.canvas.draw()
 
@@ -122,12 +126,13 @@ class WorkingFrame(QMainWindow):
         if event.key == 's':
             command = commands.SelectMethod(self._picked_ion, 'Manual', self._analyses_model, self._methods_view_model)
             self._undo_stack.push(command)
-            self._span_selector = SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, useblit=True)
+            self._span_selector = SpanSelector(self.ax_2,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, useblit=True, rectprops=dict(alpha=0.5))
             QApplication.setOverrideCursor(QCursor(Qt.IBeamCursor))
         if event.key == 'c':
             self._update_manual_range_for_ion(self._current_span)
             self._span_selector = None
             QApplication.restoreOverrideCursor()
+
 
     def on_pick(self, event):
         if isinstance(event.artist, Line2D):
@@ -146,36 +151,3 @@ class WorkingFrame(QMainWindow):
         _picked_ion = self._picked_ion
         command = commands.UpdateManualRange(_picked_ion, start, end, self._analyses_model)
         self._undo_stack.push(command)
-
-    def zoom_factory(self, base_scale = 2.):
-        def zoom_fun(event):
-            # get the current x and y limits
-            cur_xlim = self.ax.get_xlim()
-            cur_ylim = self.ax.get_ylim()
-            cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
-            cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
-            xdata = event.xdata # get event x location
-            ydata = event.ydata # get event y location
-            if event.button == 'up':
-                # deal with zoom in
-                scale_factor = 1/base_scale
-            elif event.button == 'down':
-                # deal with zoom out
-                scale_factor = base_scale
-            else:
-                # deal with something that should never happen
-                scale_factor = 1
-                print(event.button)
-            # set new limits
-            self.ax.set_xlim([xdata - cur_xrange*scale_factor,
-                         xdata + cur_xrange*scale_factor])
-            self.ax.set_ylim([ydata - cur_yrange*scale_factor,
-                         ydata + cur_yrange*scale_factor])
-            self.canvas.draw() # force re-draw
-
-        fig = self.ax.get_figure() # get the figure of interest
-        # attach the call back
-        self.canvas.mpl_connect('scroll_event',zoom_fun)
-
-        #return the function
-        return zoom_fun
