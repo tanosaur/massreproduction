@@ -507,7 +507,7 @@
     <string>.json</string>
    </property>
    <property name="shortcut">
-    <string>Ctrl+E</string>
+    <string>Ctrl+J</string>
    </property>
   </action>
   <action name="actionTools">

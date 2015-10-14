@@ -151,7 +151,7 @@ class ExportViewModel(QObject):
         existent_color_mapping = {}
 
         for ion in record.analyses.keys():
-            existent_color_mapping.update({ion.isotope.element: self._analyses[ion].color})
+            existent_color_mapping.update({ion.isotope.element: record.analyses[ion].color})
 
         line_1 = str(record.metadata.ID)
         line_2 = str(len(existent_color_mapping)) + ' ' + str(len(record.analyses))
@@ -161,18 +161,28 @@ class ExportViewModel(QObject):
         middle_block = ''
 
 
+        for element, color in existent_color_mapping.items():
+            middle_block += str(element) + '\n' + str(element) + ' ' + str(color[0]) + ' ' + str(color[1]) + ' ' + str(color[2]) + '\n'
+            elements.append(element)
+
         for ion, analysis in record.analyses.items():
-            middle_block += str(ion.isotope.element) + '\n' + str(ion.isotope.element) + ' ' + str(analysis.color[0]) + ' ' + str(analysis.color[1]) + ' ' + str(analysis.color[2]) + '\n'
-            ion_names.append(ion.isotope.element)
             ranges.append(str(analysis.range.start) + ' ' + str(analysis.range.end))
 
-        final_block_header = '------------------------- ' + ' '.join(name in elements)
+        final_block_header = '------------------------- ' + ' '.join(name for name in elements)
 
-        final_block = ''
+        final_block_contents = ''
+        index = 0
+
+        def zerolistmaker(n):
+            listofzeros = []
+            listofzeros = [0] * n
+            return listofzeros
 
         for _range in ranges:
-            final_block += '. ' + _range
-
+            zeros = zerolistmaker(len(record.analyses))
+            zeros[index] = 1
+            final_block_contents += '. ' + _range + ' ' + ' '.join(str(i) for i in zeros) + '\n'
+            index += 1
 
         with open(filename, 'w') as f:
             contents = line_1 + '\n' + line_2 + '\n' + middle_block + final_block_header + '\n' + final_block_contents

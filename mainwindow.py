@@ -40,7 +40,6 @@ class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
             self._suggested_ions_model
         )
         self._undo_stack.push(command)
-        self.addionsButton.setFocus()
         self.clearionsButton.setEnabled(True)
 
     @pyqtSlot()
@@ -88,7 +87,6 @@ class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
         self.ionlistTree.setModel(qmodel)
         self.ionlistTree.expandAll()
         self.addionsButton.setEnabled(True)
-        self.addionsButton.setFocus()
         self._qmodel=qmodel
 
 
@@ -248,8 +246,8 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
 
     @pyqtSlot()
     def on_export_error(self):
-        error_dialog = self._export_error_dialog.exec_()
         QApplication.beep()
+        error_dialog = self._export_error_dialog.exec_()
 
     @pyqtSlot()
     def on_action_LoadJSON_triggered(self):

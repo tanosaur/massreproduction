@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'mainwindow.ui'
 #
-# Created: Thu Sep 24 12:39:10 2015
+# Created: Thu Oct 15 00:53:32 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -45,6 +45,7 @@ class Ui_MassRep(object):
         self.rangedTable.setMinimumSize(QtCore.QSize(420, 335))
         self.rangedTable.setMaximumSize(QtCore.QSize(430, 16777215))
         self.rangedTable.setFrameShadow(QtGui.QFrame.Sunken)
+        self.rangedTable.setEditTriggers(QtGui.QAbstractItemView.AnyKeyPressed|QtGui.QAbstractItemView.DoubleClicked|QtGui.QAbstractItemView.EditKeyPressed)
         self.rangedTable.setDragDropMode(QtGui.QAbstractItemView.DropOnly)
         self.rangedTable.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.rangedTable.setGridStyle(QtCore.Qt.SolidLine)
@@ -289,7 +290,7 @@ class Ui_MassRep(object):
         self.action_ExportAsRNG.setText(_translate("MassRep", ".rng", None))
         self.action_ExportAsRNG.setShortcut(_translate("MassRep", "Ctrl+R", None))
         self.action_ExportAsJSON.setText(_translate("MassRep", ".json", None))
-        self.action_ExportAsJSON.setShortcut(_translate("MassRep", "Ctrl+E", None))
+        self.action_ExportAsJSON.setShortcut(_translate("MassRep", "Ctrl+J", None))
         self.actionTools.setText(_translate("MassRep", "Tools", None))
         self.actionTools.setShortcut(_translate("MassRep", "Ctrl+T", None))
 

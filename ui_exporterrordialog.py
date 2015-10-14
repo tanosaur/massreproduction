@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'export_error.ui'
 #
-# Created: Tue Sep 22 21:05:41 2015
+# Created: Thu Oct 15 00:43:59 2015
 #      by: PyQt4 UI code generator 4.11.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -43,6 +43,7 @@ class Ui_ExportErrorDialog(object):
         self.verticalLayout.addLayout(self.horizontalLayout)
 
         self.retranslateUi(ExportErrorDialog)
+        QtCore.QObject.connect(self.pushButton, QtCore.SIGNAL(_fromUtf8("clicked()")), ExportErrorDialog.reject)
         QtCore.QMetaObject.connectSlotsByName(ExportErrorDialog)
 
     def retranslateUi(self, ExportErrorDialog):

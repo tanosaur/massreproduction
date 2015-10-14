@@ -43,24 +43,36 @@ class WorkingFrame(QMainWindow):
         parent.setLayout(vbox)
 
         self.ax = self.fig.add_subplot(111)
-        self.ax_2 = self.ax.twinx()
 
         self._ions_for_lines = {}
         self._picked_ion = None
+
+        self._old_m2cs = None
+        self._old_bin_size = None
+
+        self._current_lines = []
+        self._current_line_labels = []
+        self._current_spans = []
 
         self._analyses_model = analyses_model
         self._methods_view_model = methods_view_model
         self._undo_stack = undo_stack
 
         self._preserve_ax_limits = False
-        self._old_m2cs = None
-        self._old_bin_size = None
 
 
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
-        self.ax_2.cla()
+        def _(plot_object):
+            plot_object = list(filter(None, plot_object))
+            emptied_plot_object = [_object.remove() for _object in plot_object]
+            return emptied_plot_object
 
+        if self._current_spans:
+            self._current_spans = _(self._current_spans)
+        if self._current_lines:
+            self._current_lines = _(self._current_lines)
+            self._current_line_labels = _(self._current_line_labels)
 
         if record.m2cs:
             if self._preserve_ax_limits:
@@ -78,7 +90,7 @@ class WorkingFrame(QMainWindow):
                 self.ax.set_yscale('log')
                 self.ax.set_xlabel('Da')
                 self.ax.set_ylabel('Counts')
-                self.ax_2.set_yscale('log')
+                self.ax.set_yscale('log')
                 self._preserve_ax_limits = True
 
         if record.ions:
@@ -95,19 +107,22 @@ class WorkingFrame(QMainWindow):
 
                 for ion in ions:
                     y_height = ion.isotope.abundance/100
-                    line = self.ax_2.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
+                    line = self.ax.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
-                    self.ax_2.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=trans, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=trans, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
+                    label = self.ax.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=trans, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=trans, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
+                    self._current_lines.append(line)
+                    self._current_line_labels.append(label)
 
         if record.analyses:
 
             for ion, analysis in record.analyses.items():
                 start, end = analysis.range
                 if start == end: #TODO make safer than this
-                    line = self.ax_2.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
+                    line = self.ax.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
                 else:
-                    span = self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
+                    span = self.ax.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
+                    self._current_spans.append(span)
 
         self.canvas.draw()
 
@@ -122,7 +137,7 @@ class WorkingFrame(QMainWindow):
         if event.key == 's':
             command = commands.SelectMethod(self._picked_ion, 'Manual', self._analyses_model, self._methods_view_model)
             self._undo_stack.push(command)
-            self._span_selector = SpanSelector(self.ax_2,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, useblit=True, rectprops=dict(alpha=0.5))
+            self._span_selector = SpanSelector(self.ax,self.on_span_select,'horizontal', minspan=0.0001, span_stays=True, rectprops=dict(alpha=0.5))
             QApplication.setOverrideCursor(QCursor(Qt.IBeamCursor))
         if event.key == 'c':
             self._update_manual_range_for_ion(self._current_span)
@@ -133,9 +148,9 @@ class WorkingFrame(QMainWindow):
         if isinstance(event.artist, Line2D):
             line=event.artist
             ion = self._ions_for_lines[line]
-            self.ax_2.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            new_line = self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            self._current_lines.append(new_line)
             self._picked_ion = ion
-            line.remove()
             self.canvas.draw()
 
     def on_span_select(self,x0,x1):
