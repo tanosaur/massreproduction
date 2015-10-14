@@ -54,33 +54,31 @@ class WorkingFrame(QMainWindow):
 
         self._preserve_ax_limits = False
         self._old_m2cs = None
+        self._old_bin_size = None
 
 
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
         self.ax_2.cla()
-        self.lines = 0
+
 
         if record.m2cs:
             if self._preserve_ax_limits:
-                def _(ax):
-                    cur_xlim = ax.get_xlim()
-                    cur_ylim = ax.get_ylim()
-                    ax.set_xlim(cur_xlim)
-                    ax.set_ylim(cur_ylim)
+                cur_xlim = self.ax.get_xlim()
+                cur_ylim = self.ax.get_ylim()
+                self.ax.set_xlim(cur_xlim)
+                self.ax.set_ylim(cur_ylim)
 
-                _(self.ax)
-                _(self.ax_2)
-
-            if self._old_m2cs != record.m2cs:
+            if self._old_m2cs != record.m2cs or self._old_bin_size != record.bin_size.value:
                 self._old_m2cs = record.m2cs
+                self._old_bin_size = record.bin_size.value
 
                 self.ax.cla()
                 self.ax.hist(record.m2cs, record.bin_size.value, color = 'k', histtype='step')
                 self.ax.set_yscale('log')
                 self.ax.set_xlabel('Da')
                 self.ax.set_ylabel('Counts')
-                self.canvas.draw()
+                self.ax_2.set_yscale('log')
                 self._preserve_ax_limits = True
 
         if record.ions:
@@ -109,7 +107,7 @@ class WorkingFrame(QMainWindow):
                     line = self.ax_2.axvline(ion.mass_to_charge, color='k', picker=PICKER_SENSITIVITY, label=ion.name)
                     self._ions_for_lines[line] = ion
                 else:
-                    self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
+                    span = self.ax_2.axvspan(start, end, facecolor=analysis.color, alpha=0.5)
 
         self.canvas.draw()
 
