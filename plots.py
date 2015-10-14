@@ -12,8 +12,6 @@ from matplotlib.widgets import SpanSelector
 from matplotlib.lines import Line2D
 from matplotlib import rcParams, patheffects
 from matplotlib.transforms import blended_transform_factory
-from mpl_toolkits.axes_grid.parasite_axes import SubplotHost
-
 import itertools
 
 import commands
@@ -44,12 +42,8 @@ class WorkingFrame(QMainWindow):
         vbox.addWidget(self.mpl_toolbar)
         parent.setLayout(vbox)
 
-        self.ax = SubplotHost(self.fig, 111)
-        self.fig.add_subplot(self.ax)
-        self.ax_2 = self.ax.twin()
-
-        self.ax.toggle_axisline(True)
-        self.ax.grid(True)
+        self.ax = self.fig.add_subplot(111)
+        self.ax_2 = self.ax.twinx()
 
         self._ions_for_lines = {}
         self._picked_ion = None
@@ -59,24 +53,8 @@ class WorkingFrame(QMainWindow):
         self._undo_stack = undo_stack
 
         self._preserve_ax_limits = False
+        self._old_m2cs = None
 
-    @pyqtSlot(WorkingPlotRecord)
-    def on_loaded(self, record):
-        self.ax.cla()
-
-        if record.m2cs:
-            if self._preserve_ax_limits:
-                cur_xlim = self.ax.get_xlim()
-                cur_ylim = self.ax.get_ylim()
-                self.ax.set_xlim(cur_xlim)
-                self.ax.set_ylim(cur_ylim)
-
-            self.ax.hist(record.m2cs, record.bin_size.value, color = 'k', histtype='step')
-            self.ax.set_yscale('log')
-            self.ax.set_xlabel('Da')
-            self.ax.set_ylabel('Counts')
-            self.canvas.draw()
-            self._preserve_ax_limits = True
 
     @pyqtSlot(WorkingPlotRecord)
     def on_updated(self, record):
@@ -85,10 +63,25 @@ class WorkingFrame(QMainWindow):
 
         if record.m2cs:
             if self._preserve_ax_limits:
-                cur_xlim = self.ax.get_xlim()
-                cur_ylim = self.ax.get_ylim()
-                self.ax_2.set_xlim(cur_xlim)
-                self.ax_2.set_ylim(cur_ylim)
+                def _(ax):
+                    cur_xlim = ax.get_xlim()
+                    cur_ylim = ax.get_ylim()
+                    ax.set_xlim(cur_xlim)
+                    ax.set_ylim(cur_ylim)
+
+                _(self.ax)
+                _(self.ax_2)
+
+            if self._old_m2cs != record.m2cs:
+                self._old_m2cs = record.m2cs
+
+                self.ax.cla()
+                self.ax.hist(record.m2cs, record.bin_size.value, color = 'k', histtype='step')
+                self.ax.set_yscale('log')
+                self.ax.set_xlabel('Da')
+                self.ax.set_ylabel('Counts')
+                self.canvas.draw()
+                self._preserve_ax_limits = True
 
         if record.ions:
 
@@ -121,7 +114,6 @@ class WorkingFrame(QMainWindow):
         self.canvas.draw()
 
     def on_key_press(self, event):
-        print('key')
         key_press_handler(event, self.canvas, self.mpl_toolbar)
 
         if event.key == 'a':
@@ -139,9 +131,7 @@ class WorkingFrame(QMainWindow):
             self._span_selector = None
             QApplication.restoreOverrideCursor()
 
-
     def on_pick(self, event):
-        print('picked')
         if isinstance(event.artist, Line2D):
             line=event.artist
             ion = self._ions_for_lines[line]

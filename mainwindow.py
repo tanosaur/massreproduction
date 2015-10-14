@@ -311,7 +311,6 @@ if __name__ == '__main__':
     working_frame = WorkingFrame(analyses_model, methods_view_model, undo_stack, parent=main_window.workingFrame)
 
     working_plot_view_model.updated.connect(working_frame.on_updated)
-    working_plot_view_model.loaded.connect(working_frame.on_loaded)
     loaded_m2cs_model.updated.connect(working_plot_view_model.on_m2cs_updated)
     loaded_m2cs_model.updated.connect(methods_view_model.on_m2cs_updated)
 

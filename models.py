@@ -7,11 +7,6 @@ from PyQt4.QtCore import QObject, pyqtSignal, pyqtSlot
 Isotope = namedtuple('Isotope', 'element number mass abundance')
 
 ISOTOPES = [
-    Isotope('Al', 27, 26.98, 100),
-    Isotope('Cr', 50, 49.95, 4.3),
-    Isotope('Cr', 52, 51.94, 83.8),
-    Isotope('Cr', 53, 52.94, 9.5),
-    Isotope('Cr', 54, 53.94, 2.4),
     Isotope('H', 1, 1.008, 99.985),
     Isotope('H', 2, 2.014, 0.015),
     Isotope('He', 4, 4.00, 99.9999),
