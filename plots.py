@@ -12,6 +12,7 @@ from matplotlib.widgets import SpanSelector
 from matplotlib.lines import Line2D
 from matplotlib import rcParams, patheffects
 from matplotlib.transforms import blended_transform_factory
+from mpl_toolkits.axes_grid.parasite_axes import SubplotHost
 
 import itertools
 
@@ -43,8 +44,12 @@ class WorkingFrame(QMainWindow):
         vbox.addWidget(self.mpl_toolbar)
         parent.setLayout(vbox)
 
-        self.ax = self.fig.add_subplot(111)
-        self.ax_2 = self.ax.twinx()
+        self.ax = SubplotHost(self.fig, 111)
+        self.fig.add_subplot(self.ax)
+        self.ax_2 = self.ax.twin()
+
+        self.ax.toggle_axisline(True)
+        self.ax.grid(True)
 
         self._ions_for_lines = {}
         self._picked_ion = None
@@ -116,6 +121,7 @@ class WorkingFrame(QMainWindow):
         self.canvas.draw()
 
     def on_key_press(self, event):
+        print('key')
         key_press_handler(event, self.canvas, self.mpl_toolbar)
 
         if event.key == 'a':
@@ -135,6 +141,7 @@ class WorkingFrame(QMainWindow):
 
 
     def on_pick(self, event):
+        print('picked')
         if isinstance(event.artist, Line2D):
             line=event.artist
             ion = self._ions_for_lines[line]
