@@ -1,41 +1,70 @@
 [
   [
-    "Atom_blend_data_R04",
-    "This is my beautiful experiment."
+    "R18_51353-v01",
+    "Al-Mg dataset. Ranged with auto methods except for Al +1 peak because of second jump."
   ],
-  "1H+3",
+  "25Mg+1",
   {
-    "Method": "Manual",
-    "Color": "b",
-    "Reason": "None of the auto methods worked.",
     "Ion": [
-      "H",
-      1,
-      1.008,
-      99.985,
-      3
-    ],
-    "Range": [
-      0.27767046552057173,
-      0.3887386517288005
-    ]
-  },
-  "2H+1",
-  {
-    "Method": "Voodoo",
-    "Color": "b",
-    "Reason": "It looks amazing",
-    "Ion": [
-      "H",
-      2,
-      2.014,
-      0.015,
+      "Mg",
+      25,
+      24.99,
+      10,
       1
     ],
+    "Reason": null,
+    "Color": [
+      1.0,
+      0.9333333333333333,
+      0.2
+    ],
     "Range": [
-      1.9468666666666665,
-      2.0811333333333333
-    ]
+      24.639999999999997,
+      25.34
+    ],
+    "Method": "Dummy"
   },
-  "2015-09-23 18:30:31.682180"
+  "27Al+1",
+  {
+    "Ion": [
+      "Al",
+      27,
+      26.98,
+      100,
+      1
+    ],
+    "Reason": "From floor to discontinuity",
+    "Color": [
+      1.0,
+      0.5725490196078431,
+      0.2
+    ],
+    "Range": [
+      26.571044394799692,
+      27.945168448132208
+    ],
+    "Method": "Manual"
+  },
+  "24Mg+1",
+  {
+    "Ion": [
+      "Mg",
+      24,
+      23.99,
+      78.99,
+      1
+    ],
+    "Reason": null,
+    "Color": [
+      1.0,
+      0.9333333333333333,
+      0.2
+    ],
+    "Range": [
+      23.639999999999997,
+      24.34
+    ],
+    "Method": "Dummy"
+  },
+  "2015-10-15 13:12:20.131098"
 ]

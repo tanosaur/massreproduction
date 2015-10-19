@@ -89,7 +89,6 @@ class ToolsDialog(QDialog, ui_toolsdialog.Ui_ToolsDialog):
         self.addionsButton.setEnabled(True)
         self._qmodel=qmodel
 
-
 class MethodsComboDelegate(QStyledItemDelegate):
     def __init__(self, methods, parent):
         super(MethodsComboDelegate, self).__init__(parent)
@@ -102,7 +101,6 @@ class MethodsComboDelegate(QStyledItemDelegate):
         combo.addItems(methods)
         combo.setCurrentIndex(methods.index(index.data()))
         return combo
-
 
 class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
 
@@ -170,19 +168,19 @@ class MainWindow(QMainWindow, ui_mainwindow.Ui_MassRep):
             self.rangedTable.openPersistentEditor(qmodel.index(row, 1))
         self.rangedTable.setColumnWidth(1, 95)
         self.rangedTable.setContextMenuPolicy(3)
-        self.rangedTable.customContextMenuRequested.connect(self.context_menu_requested)
-        shortcut = QShortcut(QKeySequence('Del'), self.rangedTable, self.delete_ion,self.delete_ion, context=0)
+        self.rangedTable.customContextMenuRequested.connect(self._context_menu_requested)
+        shortcut = QShortcut(QKeySequence('Del'), self.rangedTable, self._delete_ion,self._delete_ion, context=0)
 
     @pyqtSlot(QPoint)
-    def context_menu_requested(self, point):
+    def _context_menu_requested(self, point):
         if self.rangedTable.selectedIndexes():
             menu = QMenu(self)
             delete_analysis = menu.addAction('Delete')
-            delete_analysis.triggered.connect(self.delete_ion)
+            delete_analysis.triggered.connect(self._delete_ion)
             menu.exec_(self.mapToGlobal(point))
 
     @pyqtSlot()
-    def delete_ion(self):
+    def _delete_ion(self):
         selected_indexes = self.rangedTable.selectedIndexes()
         selected_ions = []
         for index in selected_indexes:

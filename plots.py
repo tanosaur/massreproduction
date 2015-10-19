@@ -145,12 +145,51 @@ class WorkingFrame(QMainWindow):
             QApplication.restoreOverrideCursor()
 
     def on_pick(self, event):
+
+        def _get_line_IDs(lines):
+            for line in lines:
+                print(self._ions_for_lines[line].name)
+
+        def _thicken_selected_line(line):
+            new_line = self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
+            self._ions_for_lines[new_line] = ion
+            self._current_lines.append(new_line)
+            self._current_lines.remove(line)
+            line.remove()
+            _get_line_IDs(self._current_lines)
+
+        def _clear_selected_line(line):
+            print(line.get_lw())
+            _get_line_IDs([line])
+            new_line = self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=1)
+            # self._current_lines.remove(line)
+            # line.remove()
+            self._ions_for_lines[new_line] = ion
+            # self._current_lines.append(new_line)
+            _get_line_IDs(self._current_lines)
+
+        def _clear_previous_selected_line():
+            self._lines_for_ions = {v: k for k, v in self._ions_for_lines.items()}
+            previous_selected_line = self._lines_for_ions[self._picked_ion]
+            _clear_selected_line(previous_selected_line)
+
         if isinstance(event.artist, Line2D):
             line=event.artist
             ion = self._ions_for_lines[line]
-            new_line = self.ax.axvline(line.get_xdata()[0], color=line.get_color(), linewidth=line.get_lw()*3)
-            self._current_lines.append(new_line)
-            self._picked_ion = ion
+            if ion == self._picked_ion:
+                print('same ion picked')
+                _clear_selected_line(line)
+                self._picked_ion = None
+            elif self._picked_ion == None:
+                print('new ion picked')
+                _thicken_selected_line(line)
+                self._picked_ion = ion
+            else:
+                print('different ion picked')
+                _clear_previous_selected_line()
+                _thicken_selected_line(line)
+                self._picked_ion = ion
+
             self.canvas.draw()
 
     def on_span_select(self,x0,x1):
