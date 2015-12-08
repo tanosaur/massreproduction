@@ -1,9 +1,9 @@
 # MassRep
 ## A reproducible workflow mass spectrum analysis GUI for atom probe tomography
 
-Requires PyQt4, matplotlib and Python 3.
-Run mainwindow.py to load GUI.
-See 'manual.htm' for GUI shortcuts.
+- Requires PyQt4, matplotlib and Python 3.
+- Run mainwindow.py to load GUI.
+- See 'manual.htm' for GUI shortcuts.
 
 ## Features
 
@@ -22,6 +22,6 @@ See 'manual.htm' for GUI shortcuts.
 ![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_auto.png)
 
 # Build
-'lookups.py' - RGB colors and isotope data
-'models.py' -> 'viewmodels.py' -> 'mainwindow.py', 'plots.py' -> 'commands.py' ( -> 'models.py')
-'ui_ ... .py' - UI setup files
+- 'lookups.py' - RGB colors and isotope data
+- 'models.py' -> 'viewmodels.py' -> 'mainwindow.py', 'plots.py' -> 'commands.py' ( -> 'models.py')
+- 'ui_ ... .py' - UI setup files
