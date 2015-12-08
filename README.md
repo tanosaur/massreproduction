@@ -1,4 +1,5 @@
-# MassRep - A reproducible workflow mass spectrum analysis GUI for atom probe tomography
+# MassRep
+## A reproducible workflow mass spectrum analysis GUI for atom probe tomography
 
 Requires PyQt4, matplotlib and Python 3.
 Run mainwindow.py to load GUI.
