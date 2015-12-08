@@ -3,7 +3,8 @@ import os
 import aptread.aptload
 
 from PyQt4.QtGui import QUndoCommand, QUndoView
-from models import Isotope, ISOTOPES, Ion, Range, Analysis
+from models import Ion, Range, Analysis
+from lookups import ISOTOPES
 
 class LoadPOS(QUndoCommand):
     def __init__(self, posfile, m2c_model, metadata_model):

@@ -1,6 +1,6 @@
 from PyQt4.QtGui import QItemDelegate, QComboBox
 from PyQt4.QtCore import QObject, SIGNAL, SLOT, pyqtSignal, pyqtSlot
-from models import BinSizeRecord, Ion, Range, ExperimentInfo, Analysis, Isotope, ISOTOPES
+from models import BinSizeRecord, Ion, Range, ExperimentInfo, Analysis, Isotope
 import json
 import datetime
 import itertools
@@ -187,7 +187,6 @@ class ExportViewModel(QObject):
         with open(filename, 'w') as f:
             contents = line_1 + '\n' + line_2 + '\n' + middle_block + final_block_header + '\n' + final_block_contents
             f.write(contents)
-
 
 class WorkingPlotViewModel(QObject):
     updated = pyqtSignal(WorkingPlotRecord)

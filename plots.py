@@ -126,22 +126,17 @@ class WorkingFrame(QMainWindow):
                 line_color=next(colors)
 
                 for ion in ions:
+                    y_height = ion.isotope.abundance/100
 
-                    def _plot_suggest_line(ion):
-                        y_height = ion.isotope.abundance/100
-                        line = self.ax.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
-                        self._ions_for_lines[line] = ion
+                    line = self.ax.axvline(ion.mass_to_charge, ymax=y_height, color=line_color, picker=PICKER_SENSITIVITY, label=ion.name)
+                    label = self.ax.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=transform, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=transform, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
 
-                    def _plot_label_for_line(ion):
-                        label = self.ax.annotate(ion.name, xy=(ion.mass_to_charge, 0), xycoords=transform, xytext=(ion.mass_to_charge, y_height+0.04), textcoords=transform, fontsize='small', ha='center', va='center', picker=PICKER_SENSITIVITY)
-                        self._current_lines.append(line)
-                        self._current_line_labels.append(label)
-
-                    _plot_suggest_line(ion)
-                    _plot_label_for_line(ion)
+                    self._ions_for_lines[line] = ion
+                    self._current_lines.append(line)
+                    self._current_line_labels.append(label)
 
         if record.analyses:
-
+            
             for ion, analysis in record.analyses.items():
                 start, end = analysis.range
                 if start == end: #TODO make safer than this
