@@ -18,5 +18,5 @@ See 'manual.htm' for GUI shortcuts.
 - bin size control
 - interactive plot controls via matplotlib (http://matplotlib.org/users/navigation_toolbar.html)
 
-![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_auto.png)
 ![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_suggest.png)
+![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_auto.png)
