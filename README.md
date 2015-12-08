@@ -20,3 +20,8 @@ See 'manual.htm' for GUI shortcuts.
 
 ![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_suggest.png)
 ![alt tag](https://github.com/sojung21/massreproduction/blob/master/wiki%20images/GUI_auto.png)
+
+# Build
+'lookups.py' - RGB colors and isotope data
+'models.py' -> 'viewmodels.py' -> 'mainwindow.py', 'plots.py' -> 'commands.py' ( -> 'models.py')
+'ui_ ... .py' - UI setup files
