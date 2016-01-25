@@ -3,7 +3,7 @@
 
 - Requires PyQt4, matplotlib and Python 3.
 - Run mainwindow.py to load GUI.
-- See 'manual.htm' for GUI shortcuts.
+- See 'manual.pdf’ for GUI shortcuts.
 
 ## Features
 
